@@ -1,0 +1,36 @@
+{
+    "version": "0.2",
+    "ignorepaths": [
+        ".github/",
+        ".git/"
+    ],
+    "ignorewords": [],
+    "ignoreRegExpList": [
+        "/```[\\s\\S]*?```/g",
+        "/`[\\s\\S]*?`/g"
+    ],
+    "import": [],
+    "dictionarydefinitions": [],
+    "dictionaries": [],
+    "words": [
+        "ccnp",
+        "containerd",
+        "daemonset",
+        "Eventlog",
+        "grpcurl",
+        "kustomization",
+        "NFD",
+        "proto",
+        "quoteserver",
+        "RTMR",
+        "TDVM",
+        "udev",
+        "PCCS",
+        "DCAP",
+        "distros",
+        "PCKID",
+        "pccs",
+        "pckcache",
+        "sysfs"
+    ]
+}
