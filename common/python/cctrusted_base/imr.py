@@ -2,57 +2,7 @@
 Integrated Measurement Register packages.
 """
 from abc import ABC, abstractmethod
-
-class TcgAlgorithmRegistry:
-    """
-    From TCG specification
-    https://trustedcomputinggroup.org/wp-content/uploads/TCG-_Algorithm_Registry_r1p32_pub.pdf
-    """
-
-    TPM_ALG_ERROR = 0x0
-    TPM_ALG_RSA = 0x1
-    TPM_ALG_TDES = 0x3
-    TPM_ALG_SHA256 = 0xB
-    TPM_ALG_SHA384 = 0xC
-    TPM_ALG_SHA512 = 0xD
-
-    TPM_ALG_TABLE = {
-        TPM_ALG_RSA: "TPM_ALG_RSA",
-        TPM_ALG_TDES: "TPM_ALG_TDES",
-        TPM_ALG_SHA256: "TPM_ALG_SHA256",
-        TPM_ALG_SHA384: "TPM_ALG_SHA384",
-        TPM_ALG_SHA512: "TPM_ALG_SHA512"
-    }
-
-    @staticmethod
-    def get_algorithm_string(alg_id: int) -> str:
-        """
-        Return algorithms name from ID
-        """
-        if alg_id in TcgAlgorithmRegistry.TPM_ALG_TABLE:
-            return TcgAlgorithmRegistry.TPM_ALG_TABLE[alg_id]
-        return "UNKNOWN"
-
-    def __init__(self, alg_id: int) -> None:
-        assert alg_id in TcgAlgorithmRegistry.TPM_ALG_TABLE, \
-            "invalid parameter alg_id"
-        self._alg_id = alg_id
-
-class TcgDigest:
-    """
-    TCG Digest
-    """
-
-    def __init__(self, alg_id=TcgAlgorithmRegistry.TPM_ALG_SHA384):
-        self._algorithms = TcgAlgorithmRegistry(alg_id)
-        self._hash = []
-
-    @property
-    def algorithms(self) -> TcgAlgorithmRegistry:
-        """
-        Algorithms for the hash of digest
-        """
-        return self._algorithms
+from cctrusted_base.tcg import TcgDigest
 
 class TcgIMR(ABC):
     """
@@ -63,7 +13,7 @@ class TcgIMR(ABC):
 
     def __init__(self):
         self._index = -1
-        self._digest = []
+        self._digests:dict[int, TcgDigest] = {}
 
     @property
     def index(self) -> int:
@@ -72,18 +22,19 @@ class TcgIMR(ABC):
         """
         return self._index
 
-    @property
-    def digest(self):
+    def digest(self, alg_id):
         """
         The digest value of IMR
         """
-        return self._digest
+        if alg_id not in self._digests:
+            return None
+        return self._digests[alg_id]
 
     @property
     @abstractmethod
-    def count(self):
+    def max_index(self):
         """
-        The total account of IMR
+        The max index value of IMR
         """
         raise NotImplementedError("Need implemented in different arch")
 
@@ -92,7 +43,7 @@ class TcgIMR(ABC):
         Check whether IMR is valid or not
         """
         return self._index != TcgIMR._INVALID_IMR_INDEX and \
-            self._index < self.count
+            self._index <= self.max_index
 
 class TdxRTMR(TcgIMR):
     """
@@ -100,8 +51,8 @@ class TdxRTMR(TcgIMR):
     """
 
     @property
-    def count(self):
-        return 4
+    def max_index(self):
+        return 3
 
 class TpmPCR(TcgIMR):
     """
@@ -109,5 +60,5 @@ class TpmPCR(TcgIMR):
     """
 
     @property
-    def count(self):
-        return 24
+    def max_index(self):
+        return 23
