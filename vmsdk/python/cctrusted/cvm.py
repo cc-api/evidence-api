@@ -6,11 +6,15 @@ Confidential VM class manages following items:
 3. IMR (integrated measurement register)
 
 """
-
+import os
 import logging
+import struct
+import fcntl
 from abc import ABC, abstractmethod
 from cctrusted_base.imr import TcgIMR
 from cctrusted_base.tcg import TcgAlgorithmRegistry
+from cctrusted_base.tdx.common import TDX_VERSION_1_0, TDX_VERSION_1_5
+from cctrusted_base.tdx.report import TdxReportReq10, TdxReportReq15
 
 LOG = logging.getLogger(__name__)
 
@@ -40,11 +44,17 @@ class ConfidentialVM:
     TYPE_CC_SEV = 1
     TYPE_CC_CCA = 1
 
+    TYPE_CC_STRING = {
+        TYPE_CC_TDX: "TDX",
+        TYPE_CC_SEV: "SEV",
+        TYPE_CC_CCA: "CCA"
+    }
+
     _inst = None
 
-    def __init__(self):
+    def __init__(self, cctype):
         self._device_node:CcDeviceNode = None
-        self._cc_type:int = ConfidentialVM.TYPE_CC_NONE
+        self._cc_type:int = cctype
         self._is_init:bool = False
         self._imrs:dict[int, TcgIMR] = {}
 
@@ -64,11 +74,26 @@ class ConfidentialVM:
         raise NotImplementedError("Should be implemented by inherited class")
 
     @property
+    @abstractmethod
+    def version(self):
+        """
+        Version of CC VM
+        """
+        raise NotImplementedError("Should be implemented by inherited class")
+
+    @property
     def imrs(self) -> list[TcgIMR]:
         """
         The array of integrated measurement registers (IMR)
         """
         return self._imrs
+
+    @property
+    def cc_type_str(self):
+        """
+        Return the CC type string
+        """
+        return ConfidentialVM.TYPE_CC_STRING[self.cc_type]
 
     def init(self) -> bool:
         """
@@ -91,9 +116,11 @@ class ConfidentialVM:
         """
         Detect the type of current confidential VM
         """
-        # TODO: add code to detect CC type
-        LOG.info("Detect the CC type")
-        return ConfidentialVM.TYPE_CC_TDX
+        # TODO: refine the justification
+        for devpath in TdxVM.DEVICE_NODE_PATH.values():
+            if os.path.exists(devpath):
+                return ConfidentialVM.TYPE_CC_TDX
+        return ConfidentialVM.TYPE_CC_NONE
 
     @abstractmethod
     def process_cc_report(self):
@@ -108,6 +135,15 @@ class ConfidentialVM:
         Process the event log
         """
         raise NotImplementedError("Should be implemented by inherited class")
+
+    def dump(self):
+        """
+        Dump confidential VM information
+        """
+        LOG.info("======================================")
+        LOG.info("CVM type = %s", self.cc_type_str)
+        LOG.info("CVM version = %s", self.version)
+        LOG.info("======================================")
 
     @staticmethod
     def inst():
@@ -126,18 +162,81 @@ class ConfidentialVM:
 
 class TdxVM(ConfidentialVM):
 
-    def process_cc_report(self):
-        """
-        Process the confidential computing REPORT.
-        """
-        return True
+    DEVICE_NODE_PATH = {
+        TDX_VERSION_1_0: "/dev/tdx-guest",
+        TDX_VERSION_1_5: "/dev/tdx_guest"
+    }
 
-    def process_eventlog(self):
-        """
-        Process the event log
-        """
-        return True
+    IOCTL_GET_REPORT = {
+        TDX_VERSION_1_0: int.from_bytes(struct.pack('Hcb', 0x08c0, b'T', 1), 'big'),
+        TDX_VERSION_1_5: int.from_bytes(struct.pack('Hcb', 0x40c4, b'T', 1),'big')
+    }
+
+    def __init__(self):
+        ConfidentialVM.__init__(self, ConfidentialVM.TYPE_CC_TDX)
+        self._version:str = None
+        self._tdreport = None
+
+    @property
+    def version(self):
+        if self._version is None:
+            for key, value in TdxVM.DEVICE_NODE_PATH.items():
+                if os.path.exists(value):
+                    self._version = key
+        return self._version
 
     @property
     def default_algo_id(self):
         return TcgAlgorithmRegistry.TPM_ALG_SHA384
+
+    @property
+    def tdreport(self):
+        """
+        return TDREPORT structure
+        """
+        return self._tdreport
+
+    def process_cc_report(self) -> bool:
+        """
+        Process the confidential computing REPORT.
+        """
+        dev_path = self.DEVICE_NODE_PATH[self.version]
+        try:
+            tdx_dev = os.open(dev_path, os.O_RDWR)
+        except (PermissionError, IOError, OSError):
+            LOG.error("Fail to open device node %s", dev_path)
+            return False
+
+        LOG.debug("Successful open device node %s", dev_path)
+
+        if self.version is TDX_VERSION_1_0:
+            tdreport_req = TdxReportReq10()
+        elif self.version is TDX_VERSION_1_5:
+            tdreport_req = TdxReportReq15()
+
+        # pylint: disable=E1111
+        reqbuf = tdreport_req.prepare_reqbuf()
+        try:
+            fcntl.ioctl(tdx_dev, self.IOCTL_GET_REPORT[self.version], reqbuf)
+        except OSError:
+            LOG.error("Fail to execute ioctl for file %s", dev_path)
+            os.close(tdx_dev)
+            return False
+
+        LOG.debug("Successful read TDREPORT from %s.", dev_path)
+        os.close(tdx_dev)
+
+        # pylint: disable=E1111
+        tdreport = tdreport_req.process_output(reqbuf)
+        if tdreport is not None:
+            LOG.debug("Successful parse TDREPORT.")
+
+        # process IMR
+        self._tdreport = tdreport
+        return True
+
+    def process_eventlog(self) -> bool:
+        """
+        Process the event log
+        """
+        return True
