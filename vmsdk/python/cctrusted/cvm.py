@@ -11,7 +11,7 @@ import logging
 import struct
 import fcntl
 from abc import ABC, abstractmethod
-from cctrusted_base.imr import TcgIMR
+from cctrusted_base.imr import TdxRTMR,TcgIMR
 from cctrusted_base.tcg import TcgAlgorithmRegistry
 from cctrusted_base.tdx.common import TDX_VERSION_1_0, TDX_VERSION_1_5
 from cctrusted_base.tdx.report import TdxReportReq10, TdxReportReq15
@@ -233,6 +233,11 @@ class TdxVM(ConfidentialVM):
 
         # process IMR
         self._tdreport = tdreport
+        self._imrs[0] = TdxRTMR(0, tdreport.td_info.rtmr_0)
+        self._imrs[1] = TdxRTMR(1, tdreport.td_info.rtmr_1)
+        self._imrs[2] = TdxRTMR(2, tdreport.td_info.rtmr_2)
+        self._imrs[3] = TdxRTMR(3, tdreport.td_info.rtmr_3)
+
         return True
 
     def process_eventlog(self) -> bool:

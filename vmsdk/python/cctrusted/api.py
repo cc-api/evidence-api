@@ -11,6 +11,20 @@ from .cvm import ConfidentialVM, TdxVM
 
 LOG = logging.getLogger(__name__)
 
+def get_default_algorithms() -> TcgAlgorithmRegistry:
+    """
+    Get default algorithms ID supported by platform
+    """
+    cvm_inst = ConfidentialVM.inst()
+    return TcgAlgorithmRegistry(cvm_inst.default_algo_id)
+
+def get_measurement_count() -> int:
+    """
+    Get IMR register value according to given index
+    """
+    cvm_inst = ConfidentialVM.inst()
+    return len(cvm_inst.imrs)
+
 def get_measurement(imr_select:[int, int]) -> TcgIMR:
     """
     Get IMR register value according to given index
