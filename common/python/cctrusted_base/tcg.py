@@ -56,8 +56,9 @@ class TcgDigest:
     TCG Digest
     """
 
-    def __init__(self, alg_id=TcgAlgorithmRegistry.TPM_ALG_SHA384):
-        self._hash: list = []
+    def __init__(self, alg_id=TcgAlgorithmRegistry.TPM_ALG_SHA384,
+                 digest_hash=None):
+        self._hash: list = digest_hash
         self._alg_id = alg_id
 
     @property

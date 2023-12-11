@@ -1,8 +1,9 @@
 """
 Integrated Measurement Register packages.
 """
+
 from abc import ABC, abstractmethod
-from cctrusted_base.tcg import TcgDigest
+from cctrusted_base.tcg import TcgDigest, TcgAlgorithmRegistry
 
 class TcgIMR(ABC):
     """
@@ -11,9 +12,10 @@ class TcgIMR(ABC):
 
     _INVALID_IMR_INDEX = -1
 
-    def __init__(self):
-        self._index = -1
-        self._digests:dict[int, TcgDigest] = {}
+    def __init__(self, index, default_alg_id, default_digest_hash):
+        self._index = index
+        self._digests:dict[int, TcgDigest] = \
+            {default_alg_id:TcgDigest(default_alg_id, default_digest_hash)}
 
     @property
     def index(self) -> int:
@@ -21,6 +23,13 @@ class TcgIMR(ABC):
         The index of IMR register
         """
         return self._index
+
+    @property
+    def digests(self) -> dict:
+        """
+        Digests dict
+        """
+        return self._digests
 
     def digest(self, alg_id):
         """
@@ -53,6 +62,10 @@ class TdxRTMR(TcgIMR):
     @property
     def max_index(self):
         return 3
+
+    def __init__(self, index, digest_hash):
+        super().__init__(index, TcgAlgorithmRegistry.TPM_ALG_SHA384,
+                        digest_hash)
 
 class TpmPCR(TcgIMR):
     """
