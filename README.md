@@ -36,3 +36,13 @@ vendor also provided simplified solution:
 | Event Log ACPI table | CCEL | TPM2 |
 
 ![](docs/cc-trusted-foundation.png)
+
+## SDKs
+
+The back-end SDK or service will produce the TCB measurements:
+
+| SDK | Deployment Scenarios |
+| --- | --------------- |
+| Firmware SDK | Firmware Application |
+| [VM SDK](https://github.com/cc-api/cc-trusted-api/tree/main/vmsdk) | Confidential Virtual Machine |
+| [Confidential Cloud Native Primitives (CCNP)](https://github.com/intel/confidential-cloud-native-primitives) | Confidential Cluster/Container |
