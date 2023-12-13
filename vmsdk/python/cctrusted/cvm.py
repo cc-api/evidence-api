@@ -171,6 +171,41 @@ class TdxVM(ConfidentialVM):
         TDX_VERSION_1_0: int.from_bytes(struct.pack('Hcb', 0x08c0, b'T', 1), 'big'),
         TDX_VERSION_1_5: int.from_bytes(struct.pack('Hcb', 0x40c4, b'T', 1),'big')
     }
+    """
+    TDX v1.0 reference: arch/x86/include/uapi/asm/tdx.h in kernel source
+    TDX ioctl command layout (bits):
+    command               dir(2)  size(14)                    type(8) nr(8)
+    TDX_CMD_GET_REPORT    11      00,0000,0000,1000 (0xc008)  b'T'    0000,0001 (1)
+    Convert the higher 16 bits from little-endian to big-endian:
+    0xc008 -> 0x08c0
+
+    TDX v1.5 reference: include/uapi/linux/tdx-guest.h in kernel source
+    TDX ioctl command layout (bits):
+    command               dir(2)  size(14bit)                 type(8bit)  nr(8bit)
+    TDX_CMD_GET_REPORT0   11      00,0100,0100,0000 (0xc440)  b'T'        0000,0001 (1)
+    Convert the higher 16 bits from little-endian to big-endian:
+    0xc440 -> 0x40c4
+    """
+
+    IOCTL_GET_QUOTE = {
+        TDX_VERSION_1_0: int.from_bytes(struct.pack('Hcb', 0x0880, b'T', 2), 'big'),
+        TDX_VERSION_1_5: int.from_bytes(struct.pack('Hcb', 0x1080, b'T', 4),'big')
+    }
+    """
+    TDX v1.0 reference: arch/x86/include/uapi/asm/tdx.h in kernel source
+    TDX ioctl command layout (bits):
+    command               dir(2)  size(14)                    type(8) nr(8)
+    TDX_CMD_GET_QUOTE     10      00,0000,0000,1000 (0x8008)  b'T'    0000,0010 (2)
+    Convert the higher 16 bits from little-endian to big-endian:
+    0x8008 -> 0x0880
+
+    TDX v1.5 Reference: include/uapi/linux/tdx-guest.h in kernel source
+    TDX ioctl command layout (bits):
+    command               dir(2)  size(14bit)                 type(8bit)  nr(8bit)
+    TDX_CMD_GET_QUOTE     10      00,0000,0001,0000 (0x8010)  b'T'        0000,0100 (4)
+    Convert the higher 16 bits from little-endian to big-endian
+    0x8010 -> 0x1080
+    """
 
     def __init__(self):
         ConfidentialVM.__init__(self, ConfidentialVM.TYPE_CC_TDX)
