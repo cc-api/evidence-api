@@ -34,3 +34,5 @@ vendor also provided simplified solution:
 | --- | --- | --- |
 | Integrity Measurement Register | RTMR/MRTD | PCR |
 | Event Log ACPI table | CCEL | TPM2 |
+
+![](docs/cc-trusted-foundation.png)
