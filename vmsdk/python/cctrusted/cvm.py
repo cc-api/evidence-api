@@ -42,7 +42,7 @@ class ConfidentialVM:
     TYPE_CC_NONE = -1
     TYPE_CC_TDX = 0
     TYPE_CC_SEV = 1
-    TYPE_CC_CCA = 1
+    TYPE_CC_CCA = 2
 
     TYPE_CC_STRING = {
         TYPE_CC_TDX: "TDX",
