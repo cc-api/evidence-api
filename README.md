@@ -22,7 +22,7 @@ event record follows [TCG PC Client Platform Firmware Profile Specification](htt
 | TEE | Vendor Secure Module like Intel TDX module, SEV secure processor | Vendor Specification like [Intel TDX Module Specification](https://cdrdv2-public.intel.com/733575/intel-tdx-module-1.5-base-spec-348549002.pdf) |
 | Firmware | [EFI_CC_MEASUREMENT_PROTOCOL](https://github.com/tianocore/edk2/blob/master/MdePkg/Include/Protocol/CcMeasurement.h) | [UEFI Specification 2.10](https://uefi.org/specs/UEFI/2.10/) |
 | Boot Loader | [EFI_CC_MEASUREMENT_PROTOCOL](https://github.com/tianocore/edk2/blob/master/MdePkg/Include/Protocol/CcMeasurement.h) | Grub2/Shim |
-| OS | Integrity Measurement Architecture (IMA)) | [Specification]((https://sourceforge.net/p/linux-ima/wiki/Home/)) |
+| OS | Integrity Measurement Architecture (IMA) | [Specification](https://sourceforge.net/p/linux-ima/wiki/Home/) |
 | Cloud Native | Confidential Cloud Native Primitives (CCNP) | [Repository](https://github.com/intel/confidential-cloud-native-primitives) |
 
 ## Trusted Foundation
