@@ -1,9 +1,9 @@
 # CC Trusted API
 
-The project help to access and process the trusted primitives (measurement, eventlog,
-quote) in confidential computing environment. It support multiple language flavors.
+The project helps to access and process the trusted primitives (measurement, eventlog,
+quote) in the confidential computing environment. It supports multiple language flavors.
 
-It also provides back-end tool, IMA template, services to produce the diverse TCBs
+It also provides backend tools, IMA templates, services to produce the diverse TCBs
 according to deployment.
 
 ![](docs/cc-trusted-api-overview.png)
