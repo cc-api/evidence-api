@@ -6,6 +6,7 @@ import logging
 # pylint: disable=unused-import
 from cctrusted_base.imr import TcgIMR
 from cctrusted_base.quote import Quote
+from cctrusted_base.eventlog import TcgEventLog
 from cctrusted_base.tcg import TcgAlgorithmRegistry
 from .cvm import ConfidentialVM
 
@@ -52,3 +53,14 @@ def get_quote(nonce: bytearray, data: bytearray, extraArgs) -> Quote:
     cvm_inst.dump()
 
     return cvm_inst.get_quote(nonce, data, extraArgs)
+
+def get_eventlog(start:int = None, count:int = None) -> TcgEventLog:
+    cvm_inst = ConfidentialVM.inst()
+    cvm_inst.dump()
+
+    event_logs = TcgEventLog(cvm_inst.cc_event_log)
+    event_logs.select(start, count, 
+                     cvm_inst.ccel_data.log_area_start_address,
+                     cvm_inst.ccel_data.log_area_minimum_length)
+    
+    return event_logs

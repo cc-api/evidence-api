@@ -1,5 +1,5 @@
 """
-Integrated Measurement Register packages.
+Integrity Measurement Register packages.
 """
 
 from abc import ABC, abstractmethod
