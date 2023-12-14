@@ -6,8 +6,7 @@ import logging
 # pylint: disable=unused-import
 from cctrusted_base.imr import TcgIMR
 from cctrusted_base.tcg import TcgAlgorithmRegistry
-from cctrusted_base.tdx.report import TdReport
-from .cvm import ConfidentialVM, TdxVM
+from .cvm import ConfidentialVM
 
 LOG = logging.getLogger(__name__)
 
@@ -43,13 +42,3 @@ def get_measurement(imr_select:[int, int]) -> TcgIMR:
         algo_id = cvm_inst.default_algo_id
 
     return cvm_inst.imrs[imr_index].digest(algo_id)
-
-def get_tdx_report() -> TdReport:
-    """
-    Get TDX Report
-    """
-    cvm_inst = ConfidentialVM.inst()
-    cvm_inst.dump()
-
-    assert isinstance(cvm_inst, TdxVM)
-    return cvm_inst.tdreport
