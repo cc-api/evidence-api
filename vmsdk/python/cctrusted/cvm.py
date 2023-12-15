@@ -6,14 +6,19 @@ Confidential VM class manages following items:
 3. IMR (integrated measurement register)
 
 """
+import base64
+import ctypes
+import hashlib
 import os
 import logging
 import struct
 import fcntl
 from abc import ABC, abstractmethod
 from cctrusted_base.imr import TdxRTMR,TcgIMR
+from cctrusted_base.quote import Quote
 from cctrusted_base.tcg import TcgAlgorithmRegistry
 from cctrusted_base.tdx.common import TDX_VERSION_1_0, TDX_VERSION_1_5
+from cctrusted_base.tdx.qh import QuoteHelper, TdxQuote
 from cctrusted_base.tdx.report import TdxReportReq10, TdxReportReq15
 
 LOG = logging.getLogger(__name__)
@@ -136,6 +141,13 @@ class ConfidentialVM:
         """
         raise NotImplementedError("Should be implemented by inherited class")
 
+    @abstractmethod
+    def get_quote(self, nonce: bytearray, data: bytearray, extraArgs) -> Quote:
+        """
+        Get quote
+        """
+        raise NotImplementedError("Should be implemented by inherited class")
+
     def dump(self):
         """
         Dump confidential VM information
@@ -206,6 +218,9 @@ class TdxVM(ConfidentialVM):
     Convert the higher 16 bits from little-endian to big-endian
     0x8010 -> 0x1080
     """
+
+    # The length of the tdquote 4 pages
+    TDX_QUOTE_LEN = 4 * 4096
 
     def __init__(self):
         ConfidentialVM.__init__(self, ConfidentialVM.TYPE_CC_TDX)
@@ -280,3 +295,60 @@ class TdxVM(ConfidentialVM):
         Process the event log
         """
         return True
+
+    def get_quote(self, nonce: bytearray, data: bytearray, extraArgs) -> Quote:
+        """
+        Get TDX quote
+        """
+
+        # Prepare user defined data which could include nonce
+        if nonce is not None:
+            nonce = base64.b64decode(nonce)
+        if data is not None:
+            data = base64.b64decode(data)
+        report_bytes = None
+        if self.tdreport is not None:
+            LOG.info("Using report data directly to generate quote")
+            report_bytes = self.tdreport.data
+        if report_bytes is None:
+            LOG.error("No existing report data")
+            if nonce is None and data is None:
+                LOG.info("No report data, generating default quote")
+            else:
+                LOG.info("Calculate report data by nonce and user data")
+                hash_algo = hashlib.sha512()
+                if nonce is not None:
+                    hash_algo.update(bytes(nonce))
+                if data is not None:
+                    hash_algo.update(bytes(data))
+                report_bytes = hash_algo.digest()
+
+        # Open TDX guest device node
+        dev_path = self.DEVICE_NODE_PATH[self.version]
+        try:
+            tdx_dev = os.open(dev_path, os.O_RDWR)
+        except (PermissionError, IOError, OSError):
+            LOG.error("Fail to open device node %s", dev_path)
+            return False
+        LOG.debug("Succeed open device node %s", dev_path)
+
+        # Run ioctl command to get TD Quote
+        tdquote_buf = ctypes.create_string_buffer(QuoteHelper.TDX_QUOTE_LEN)
+        quote_req = QuoteHelper.create_tdx_quote_req(report_bytes, tdquote_buf)
+        try:
+            fcntl.ioctl(tdx_dev, self.IOCTL_GET_QUOTE[self.version], quote_req)
+        except OSError:
+            LOG.error("Fail to execute ioctl for file %s", dev_path)
+            os.close(tdx_dev)
+            return False
+        LOG.debug("Succeed get Quote from %s.", dev_path)
+        os.close(tdx_dev)
+
+        # Get TD Quote from tdx_quote_req
+        tdquote_bytes = QuoteHelper.get_tdquote_bytes_from_req(quote_req)
+
+        # Dump the TD Quote info
+        # TODO: parse the info according to TD Quote format
+        print(tdquote_bytes)
+
+        return TdxQuote(tdquote_bytes)
