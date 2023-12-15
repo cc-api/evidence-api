@@ -2,6 +2,11 @@
 """
 TCG common definitions
 """
+import logging
+from cctrusted_base.binaryblob import BinaryBlob
+
+LOG = logging.getLogger(__name__)
+
 
 class TcgAlgorithmRegistry:
     """
@@ -163,7 +168,7 @@ class TcgEventType:
     @property
     def event_type(self) -> int:
         """
-        Get event type
+        Return event type
         """
         return self._event_type
 
@@ -178,23 +183,23 @@ class TcgImrEventLogEntry:
     TCG IMR Event struct defined at
     https://trustedcomputinggroup.org/wp-content/uploads/TCG_EFI_Platform_1_22_Final_-v15.pdf
 
-    typedef struct {
-        TCG_PCRINDEX PCRIndex; //PCRIndex event extended to
-        TCG_EVENTTYPE EventType;//See Table 7-1, below
-        TCG_DIGEST Digest; //Value extended into PCRIndex
-        UINT32 EventSize;//Size of the event data
-        UINT8 Event[1]; //The event data
-        } TCG_PCR_EVENT; //Structure to be added to the
-                         //Event Log
-
+    typedef struct tdTCG_PCR_EVENT2{
+        UINT32 pcrIndex;
+        UINT32 eventType;
+        TPML_DIGEST_VALUES digests;
+        UINT32 eventSize;
+        BYTE event[eventSize];
+    } TCG_PCR_EVENT2;
+ 
     """
-
-    def __init__(self) -> None:
-        self._imr_index:int = None
-        self._event_type:TcgEventType = None
-        self._digest:TcgDigest = None
-        self._event_size:int = None
-        self._event:int = None
+    
+    def __init__(self, imr_index:int, event_type:TcgEventType, digests:list[TcgDigest],
+                 event_size:int, event:bytes) -> None:
+        self._imr_index = imr_index
+        self._event_type = event_type
+        self._digests = digests
+        self._event_size = event_size
+        self._event = event
 
     @property
     def imr_index(self) -> int:
@@ -211,11 +216,11 @@ class TcgImrEventLogEntry:
         return self._event_type
 
     @property
-    def digest(self) -> TcgDigest:
+    def digests(self) -> list[TcgDigest]:
         """
-        Get event digest
+        Get digests
         """
-        return self._digest
+        return self._digests
 
     @property
     def event_size(self) -> int:
@@ -225,9 +230,82 @@ class TcgImrEventLogEntry:
         return self._event_size
 
     @property
-    def event(self) -> int:
+    def event(self) -> bytes:
         """
-        Get event start address
+        Get event data
+        """
+        return self._event
+
+    def dump(self):
+        """
+        dump data
+        """
+        LOG.info("----------------------------------------------------------------------------")
+        LOG.info("IMR               : %d", self._imr_index)
+        LOG.info("Type              : 0x%X (%s)", self._event_type,
+                                 TcgEventType.get_event_type_string(self._event_type))
+        count = 0
+        for digest in self._digests:
+            LOG.info("Algorithm_id      : %d (%s)",digest.alg.alg_id,
+                    TcgAlgorithmRegistry.get_algorithm_string(digest.alg.alg_id))
+            LOG.info("Digest[%d] :", count)
+            digest_blob = BinaryBlob(digest.hash)
+            digest_blob.dump()
+            count += 1
+
+class TcgPcClientImrEvent:
+    """
+    TCG TCG_PCClientPCREvent defined at
+    https://trustedcomputinggroup.org/wp-content/uploads/TCG_PCClientSpecPlat_TPM_2p0_1p04_pub.pdf
+
+    typedef tdTCG_PCClientPCREvent {
+        UINT32 pcrIndex;
+        UINT32 eventType;
+        BYTE digest[20];
+        UINT32 eventDataSize;
+        BYTE event[eventDataSize]; //This is actually a TCG_EfiSpecIDEventStruct
+    } TCG_PCClientPCREvent;
+    """
+    def __init__(self, imr_index:int, event_type:int, digest:bytes, event_data_size:int,
+                 event:bytes) -> None:
+        self._imr_index = imr_index
+        self._event_type = event_type
+        self._digest = digest
+        self._event_data_size = event_data_size
+        self._event = event
+
+    @property
+    def imr_index(self):
+        """
+        Return IMR index
+        """
+        return self._imr_index
+
+    @property
+    def event_type(self):
+        """
+        Return event type
+        """
+        return self._event_type
+
+    @property
+    def digest(self):
+        """
+        Return digest
+        """
+        return self._digest
+
+    @property
+    def event_data_size(self):
+        """
+        Return event data size
+        """
+        return self._event_data_size
+
+    @property
+    def event(self):
+        """
+        Return event
         """
         return self._event
 
@@ -250,18 +328,23 @@ class TcgEfiSpecIdEvent:
     } TCG_EfiSpecIDEventStruct;
     """
 
-    def __init__(self) -> None:
-        self._signature:list[bytes] = None
-        self._platform_class:int = None
-        self._spec_version_minor:int = None
-        self._sepc_version_major:int = None
-        self._spec_errata:int = None
-        self._uintn_size:int = None
-        self._number_of_algos:int = None
-        self._digest_sizes:list[TcgEfiSpecIdEventAlgorithmSize] = None
+    def __init__(self, sig:bytes, platform_class:int, spec_version_minor:int,
+                 spec_version_major:int, spec_errata:int, uintn_size:int,
+                 number_of_algos:int, digest_sizes, vendor_info_size:int,
+                 vendor_info:bytes) -> None:
+        self._signature:bytes = sig
+        self._platform_class:int = platform_class
+        self._spec_version_minor:int = spec_version_minor
+        self._sepc_version_major:int = spec_version_major
+        self._spec_errata:int = spec_errata
+        self._uintn_size:int = uintn_size
+        self._number_of_algos:int = number_of_algos
+        self._digest_sizes:list[TcgEfiSpecIdEventAlgorithmSize] = digest_sizes
+        self._vendor_info_size:int = vendor_info_size
+        self._vendor_info:bytes = vendor_info
 
     @property
-    def signature(self) -> list[bytes]:
+    def signature(self) -> bytes:
         """
         Get signature
         """
@@ -327,14 +410,14 @@ class TcgEfiSpecIdEventAlgorithmSize:
     } TCG_EfiSpecIdEventAlgorithmSize;
     """
 
-    def __init__(self) -> None:
-        self._algo_id:int = None
-        self._digest_size:int = None
+    def __init__(self, alg_id:int, digest_size:int) -> None:
+        self._algo_id = alg_id
+        self._digest_size = digest_size
 
     @property
     def algo_id(self):
         """
-        Get algorithm id
+        Get algorithm Id
         """
         return self._algo_id
 
