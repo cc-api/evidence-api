@@ -105,14 +105,14 @@ class ConfidentialVM:
         Return the CC type string
         """
         return ConfidentialVM.TYPE_CC_STRING[self.cc_type]
-    
+
     @property
     def cc_event_log(self):
         """
         return event log data blob
         """
         return self._cc_event_log
-    
+
     @property
     def ccel_data(self):
         """
@@ -317,11 +317,11 @@ class TdxVM(ConfidentialVM):
         if not os.path.exists(ConfidentialVM.CCEL_TABLE_FILE):
             LOG.error("Failed to find TDX CCEL table at %s", ConfidentialVM.CCEL_TABLE_FILE)
             return False
-        
+
         if not os.path.exists(ConfidentialVM.CCEL_DATA_FILE):
             LOG.error("Failed to find TDX CCEL data file at %s", ConfidentialVM.CCEL_DATA_FILE)
             return False
-        
+
         try:
             with open(ConfidentialVM.CCEL_TABLE_FILE, "rb") as f:
                 ccel_data = f.read()
@@ -331,7 +331,7 @@ class TdxVM(ConfidentialVM):
         except (PermissionError, OSError):
             LOG.error("Need root permission to open file %s", ConfidentialVM.CCEL_TABLE_FILE)
             return False
-        
+
         try:
             with open(ConfidentialVM.CCEL_DATA_FILE, "rb") as f:
                 self._cc_event_log = f.read()

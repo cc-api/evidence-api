@@ -192,7 +192,7 @@ class TcgImrEventLogEntry:
     } TCG_PCR_EVENT2;
  
     """
-    
+
     def __init__(self, imr_index:int, event_type:TcgEventType, digests:list[TcgDigest],
                  event_size:int, event:bytes) -> None:
         self._imr_index = imr_index
@@ -240,7 +240,7 @@ class TcgImrEventLogEntry:
         """
         dump data
         """
-        LOG.info("----------------------------------------------------------------------------")
+        LOG.info("-------------------------------Event Log Entry-----------------------------")
         LOG.info("IMR               : %d", self._imr_index)
         LOG.info("Type              : 0x%X (%s)", self._event_type,
                                  TcgEventType.get_event_type_string(self._event_type))
@@ -248,7 +248,7 @@ class TcgImrEventLogEntry:
         for digest in self._digests:
             LOG.info("Algorithm_id      : %d (%s)",digest.alg.alg_id,
                     TcgAlgorithmRegistry.get_algorithm_string(digest.alg.alg_id))
-            LOG.info("Digest[%d] :", count)
+            LOG.info("Digest[%d]:", count)
             digest_blob = BinaryBlob(digest.hash)
             digest_blob.dump()
             count += 1
@@ -308,6 +308,18 @@ class TcgPcClientImrEvent:
         Return event
         """
         return self._event
+
+    def dump(self):
+        """
+        Dump data
+        """
+        LOG.info("--------------------Header Specification ID Event--------------------------")
+        LOG.info("IMR               : %d", self._imr_index)
+        LOG.info("Type              : 0x%X (%s)", self._event_type,
+                TcgEventType.get_event_type_string(self._event_type))
+        LOG.info("Event:")
+        blob = BinaryBlob(self._event)
+        blob.dump()
 
 class TcgEfiSpecIdEvent:
     """

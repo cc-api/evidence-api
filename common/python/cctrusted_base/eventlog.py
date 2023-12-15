@@ -86,19 +86,18 @@ class TcgEventLog:
         self._parse(start_addr, log_len)
 
         if start is not None:
-            if start > 0 and start <= self._count:
-                self._event_logs = self._event_logs[start-1:]
-            else:
+            if not 0 < start <= self._count:
                 LOG.error("Invalid input start. Start must be number larger than 0 \
                       and smaller than total event log count.")
+            else:
+                self._event_logs = self._event_logs[start-1:]
 
         if count is not None:
-            if count > 0 and count <= len(self._event_logs):
-                self._event_logs = self._event_logs[:count-1]
-            else:
+            if not 0 < count <= len(self._event_logs):
                 LOG.error("Invalid input count. count must be number larger than 0 \
                       and smaller than total event log count.")
-
+            else:
+                self._event_logs = self._event_logs[:count-1]
 
     def _parse(self, start_addr:int, log_len:int) -> None:
         """
