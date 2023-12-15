@@ -10,5 +10,6 @@ logging.basicConfig(level=logging.NOTSET, format='%(message)s')
 
 event_logs = cctrusted.get_eventlog()
 LOG.info("Total %d of event logs fetched.", len(event_logs.event_logs))
+event_logs.spec_id_header.dump()
 for e in event_logs.event_logs:
     e.dump()
