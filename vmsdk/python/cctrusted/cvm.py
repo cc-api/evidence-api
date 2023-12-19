@@ -7,7 +7,6 @@ Confidential VM class manages following items:
 
 """
 import base64
-import ctypes
 import hashlib
 import os
 import logging
@@ -19,7 +18,7 @@ from cctrusted_base.quote import Quote
 from cctrusted_base.ccel import CCEL
 from cctrusted_base.tcg import TcgAlgorithmRegistry
 from cctrusted_base.tdx.common import TDX_VERSION_1_0, TDX_VERSION_1_5
-from cctrusted_base.tdx.qh import QuoteHelper, TdxQuote
+from cctrusted_base.tdx.quote import TdxQuoteReq10, TdxQuoteReq15
 from cctrusted_base.tdx.report import TdxReportReq10, TdxReportReq15
 
 LOG = logging.getLogger(__name__)
@@ -341,6 +340,7 @@ class TdxVM(ConfidentialVM):
             return False
         return True
 
+
     def get_quote(self, nonce: bytearray, data: bytearray, extraArgs) -> Quote:
         """
         Get TDX quote
@@ -375,25 +375,23 @@ class TdxVM(ConfidentialVM):
         except (PermissionError, IOError, OSError):
             LOG.error("Fail to open device node %s", dev_path)
             return False
-        LOG.debug("Succeed open device node %s", dev_path)
+        LOG.debug("Successful open device node %s", dev_path)
 
         # Run ioctl command to get TD Quote
-        tdquote_buf = ctypes.create_string_buffer(QuoteHelper.TDX_QUOTE_LEN)
-        quote_req = QuoteHelper.create_tdx_quote_req(report_bytes, tdquote_buf)
+        if self.version is TDX_VERSION_1_0:
+            quote_req = TdxQuoteReq10()
+        elif self.version is TDX_VERSION_1_5:
+            quote_req = TdxQuoteReq15()
+        # pylint: disable=E1111
+        req_buf = quote_req.prepare_reqbuf(report_bytes)
         try:
-            fcntl.ioctl(tdx_dev, self.IOCTL_GET_QUOTE[self.version], quote_req)
+            fcntl.ioctl(tdx_dev, self.IOCTL_GET_QUOTE[self.version], req_buf)
         except OSError:
             LOG.error("Fail to execute ioctl for file %s", dev_path)
             os.close(tdx_dev)
             return False
-        LOG.debug("Succeed get Quote from %s.", dev_path)
+        LOG.debug("Successful get Quote from %s.", dev_path)
         os.close(tdx_dev)
 
-        # Get TD Quote from tdx_quote_req
-        tdquote_bytes = QuoteHelper.get_tdquote_bytes_from_req(quote_req)
-
-        # Dump the TD Quote info
-        # TODO: parse the info according to TD Quote format
-        print(tdquote_bytes)
-
-        return TdxQuote(tdquote_bytes)
+        # Get TD Quote from ioctl command output
+        return quote_req.process_output(req_buf)
