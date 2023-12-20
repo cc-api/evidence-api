@@ -3,7 +3,7 @@ Command line to get quote
 """
 import argparse
 import logging
-import cctrusted
+from cctrusted import CCTrustedVmSdk
 
 LOG = logging.getLogger(__name__)
 OUT_FORMAT_RAW = "raw"
@@ -32,6 +32,6 @@ else:
     parser.exit(2, "Specified output format is not supported!")
 
 logging.basicConfig(level=logging.NOTSET, format='%(name)s %(levelname)-8s %(message)s')
-quote = cctrusted.get_quote(None, None, None)
+quote = CCTrustedVmSdk.inst().get_quote(None, None, None)
 if quote is not None:
     quote.dump(dump_raw)

@@ -3,11 +3,11 @@
 Command line to dump the integrated measurement register
 """
 import logging
-import cctrusted
+from cctrusted import CCTrustedTdvmSdk
 
 LOG = logging.getLogger(__name__)
 
 logging.basicConfig(level=logging.NOTSET, format='%(message)s')
 
-tdreport = cctrusted.get_tdx_report()
+tdreport = CCTrustedTdvmSdk.inst().get_tdreport()
 tdreport.dump()
