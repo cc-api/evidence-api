@@ -15,7 +15,6 @@ import fcntl
 from abc import abstractmethod
 from cctrusted_base.imr import TdxRTMR,TcgIMR
 from cctrusted_base.quote import Quote
-from cctrusted_base.ccel import CCEL
 from cctrusted_base.tcg import TcgAlgorithmRegistry
 from cctrusted_base.tdx.common import TDX_VERSION_1_0, TDX_VERSION_1_5
 from cctrusted_base.tdx.quote import TdxQuoteReq10, TdxQuoteReq15
@@ -36,16 +35,12 @@ class ConfidentialVM:
         TYPE_CC_CCA: "CCA"
     }
 
-    CCEL_TABLE_FILE = "/sys/firmware/acpi/tables/CCEL"
-    CCEL_DATA_FILE = "/sys/firmware/acpi/tables/data/CCEL"
-
     _inst = None
 
     def __init__(self, cctype):
         self._cc_type:int = cctype
         self._is_init:bool = False
         self._imrs:dict[int, TcgIMR] = {}
-        self._ccel_data:CCEL = None
         self._cc_event_log:bytes = None
 
     @property
@@ -79,11 +74,6 @@ class ConfidentialVM:
     def cc_event_log(self):
         """event log data blob."""
         return self._cc_event_log
-
-    @property
-    def ccel_data(self):
-        """ccel data blob."""
-        return self._ccel_data
 
     def init(self) -> bool:
         """Initialize the CC stub and environment.
@@ -220,6 +210,10 @@ class TdxVM(ConfidentialVM):
     # The length of the tdquote 4 pages
     TDX_QUOTE_LEN = 4 * 4096
 
+    # ACPI table containing the event logs
+    ACPI_TABLE_FILE = "/sys/firmware/acpi/tables/CCEL"
+    ACPI_TABLE_DATA_FILE = "/sys/firmware/acpi/tables/data/CCEL"
+
     def __init__(self):
         ConfidentialVM.__init__(self, ConfidentialVM.TYPE_CC_TDX)
         self._version:str = None
@@ -285,31 +279,47 @@ class TdxVM(ConfidentialVM):
         return True
 
     def process_eventlog(self) -> bool:
-        """Process the event log."""
-        if not os.path.exists(ConfidentialVM.CCEL_TABLE_FILE):
-            LOG.error("Failed to find TDX CCEL table at %s", ConfidentialVM.CCEL_TABLE_FILE)
+        """Process the event log
+
+        Fetch boot time event logs from CCEL table and CCEL data file
+        Save contents into TdxVM attributes
+
+        Args:
+            None
+
+        Returns:
+            A boolean indicating the status of process_eventlog
+            True means the function runs successfully
+            False means error occurred in event log processing
+
+        Raises:
+            PermissionError: An error occurred when accessing CCEL files
+        """
+
+        # verify if CCEL files existed
+        if not os.path.exists(TdxVM.ACPI_TABLE_FILE):
+            LOG.error("Failed to find TDX CCEL table at %s", TdxVM.ACPI_TABLE_FILE)
             return False
 
-        if not os.path.exists(ConfidentialVM.CCEL_DATA_FILE):
-            LOG.error("Failed to find TDX CCEL data file at %s", ConfidentialVM.CCEL_DATA_FILE)
+        if not os.path.exists(TdxVM.ACPI_TABLE_DATA_FILE):
+            LOG.error("Failed to find TDX CCEL data file at %s", TdxVM.ACPI_TABLE_DATA_FILE)
             return False
 
         try:
-            with open(ConfidentialVM.CCEL_TABLE_FILE, "rb") as f:
+            with open(TdxVM.ACPI_TABLE_FILE, "rb") as f:
                 ccel_data = f.read()
                 assert len(ccel_data) > 0 and ccel_data[0:4] == b'CCEL', \
                     "Invalid CCEL table"
-                self._ccel_data = CCEL(ccel_data)
         except (PermissionError, OSError):
-            LOG.error("Need root permission to open file %s", ConfidentialVM.CCEL_TABLE_FILE)
+            LOG.error("Need root permission to open file %s", TdxVM.ACPI_TABLE_FILE)
             return False
 
         try:
-            with open(ConfidentialVM.CCEL_DATA_FILE, "rb") as f:
+            with open(TdxVM.ACPI_TABLE_DATA_FILE, "rb") as f:
                 self._cc_event_log = f.read()
                 assert len(self._cc_event_log) > 0
         except (PermissionError, OSError):
-            LOG.error("Need root permission to open file %s", ConfidentialVM.CCEL_DATA_FILE)
+            LOG.error("Need root permission to open file %s", TdxVM.ACPI_TABLE_DATA_FILE)
             return False
         return True
 

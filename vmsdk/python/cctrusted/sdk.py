@@ -119,8 +119,6 @@ class CCTrustedVmSdk(CCTrustedApi):
             ``TcgEventLog`` object.
         """
         event_logs = TcgEventLog(self._cvm.cc_event_log)
-        event_logs.select(start, count,
-            self._cvm.ccel_data.log_area_start_address,
-            self._cvm.ccel_data.log_area_minimum_length)
+        event_logs.select(start, count)
 
         return event_logs

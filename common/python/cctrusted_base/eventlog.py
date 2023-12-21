@@ -15,6 +15,18 @@ from cctrusted_base.tcg import TcgPcClientImrEvent
 LOG = logging.getLogger(__name__)
 
 class TcgEventLog:
+    """
+    TcgEventLog class
+
+    This class contains the event logs following TCG specification.
+
+    Attributes:
+        data: raw data containing all event logs
+        spec_id_header: the first Specification ID Header event log
+        spec_id_header_event: detail event of Specification ID Header event
+        event_logs: all parsed event logs
+        count: total number of event logs
+    """
 
     def __init__(self, data:bytes) -> None:
         self._data = data
@@ -52,64 +64,93 @@ class TcgEventLog:
         """
         return self._count
 
-    def dump_raw(self):
-        """
-        Dump raw event log data
-        """
-        LOG.info("RAW DATA: ----------------------------------------------")
-        blob = BinaryBlob(self._data, 0)
-        blob.dump()
-        LOG.info("RAW DATA: ----------------------------------------------")
+    def dump(self, is_raw=True) -> None:
+        """Dump event log data
 
-    def dump(self):
-        """
-        Dump formatted event log data
+        Args:
+            is_raw: indicator for dump output format
+                True: dump in hex strings
+                False: dump in human readable texts
+
+        Returns:
+            None
+
+        Raises:
+            None
         """
         if self._count == 0:
             LOG.info("No parsed event log found.")
             return
 
-        LOG.info("Total %d of event logs found.", self._count)
-        LOG.info("EVENT LOG HEADER DATA:--------------------------------------------")
-        LOG.info("Header IMR: %d", self._spec_id_header.imr_index)
-        LOG.info("Header Event Type: %s",
-                TcgEventType.get_event_type_string(self._spec_id_header.event_type))
-        LOG.info("Header Event: ")
-        # add specification id event dump
-        LOG.info("EVENT LOG DATA:---------------------------------------------------")
-        # add the event log dump
+        if is_raw:
+            LOG.info("RAW DATA: ------------------------------------------------------------------")
+            blob = BinaryBlob(self._data, 0)
+            blob.dump()
+            LOG.info("RAW DATA: ------------------------------------------------------------------")
+            return
 
-    def select(self, start:int, count:int, start_addr:int, log_len:int) -> None:
+        LOG.info("Header Event: ")
+        self._spec_id_header.dump()
+        LOG.info("Event Log Entries:")
+        for event in self._event_logs:
+            event.dump()
+
+    def select(self, start:int, count:int) -> None:
+        """Collect selected event logs according to user specification
+
+        Args:
+            start: index of the first event log to collect
+            count: total number of event logs to collect
+            start_addr: event log data base address
+            log_len: event log data total length
+
+        Returns:
+            None
+
+        Raises:
+            None
         """
-        Select number of event logs to be returned
-        """
-        self._parse(start_addr, log_len)
+        self._parse()
 
         if start is not None:
             if not 0 < start <= self._count:
                 LOG.error("Invalid input start. Start must be number larger than 0 \
                       and smaller than total event log count.")
-            else:
-                self._event_logs = self._event_logs[start-1:]
+                raise ValueError('Invalid parameter start.')
+
+            self._event_logs = self._event_logs[start-1:]
 
         if count is not None:
             if not 0 < count <= len(self._event_logs):
                 LOG.error("Invalid input count. count must be number larger than 0 \
                       and smaller than total event log count.")
-            else:
-                self._event_logs = self._event_logs[:count-1]
+                raise ValueError('Invalid parameter count.')
 
-    def _parse(self, start_addr:int, log_len:int) -> None:
-        """
-        Parse TCG event logs
-        """
-        if self._data is None or start_addr is None:
-            LOG.error("Providing invalid data blob and start address")
+            self._event_logs = self._event_logs[:count]
 
-        blob = BinaryBlob(self._data, start_addr)
+    def _parse(self) -> None:
+        """Parse event log data into TCG compatible forms
+
+        Run through all event log data and parse the contents accordingly
+        Save the parsed event logs into TcgEventLog
+
+        Args:
+            start_addr: index of the first event log to collect
+            log_len: event log data total length
+
+        Returns:
+            None
+
+        Raises:
+            None
+        """
+        if self._data is None:
+            LOG.error("Providing invalid data blob.")
+
+        blob = BinaryBlob(self._data, 0)
         index = 0
 
-        while index < log_len:
+        while index < len(self._data):
             start = index
             imr, index = blob.get_uint32(index)
             event_type, index = blob.get_uint32(index)
@@ -118,19 +159,20 @@ class TcgEventLog:
                 break
 
             if event_type == TcgEventType.EV_NO_ACTION:
-                header_len = self._parse_header(self._data[start:], start_addr)
+                header_len = self._parse_header(self._data[start:])
                 index = start + header_len
+                self._count += 1
             else:
-                event_log, e_len = self._parse_event_log_body(self._data[start:], start_addr)
+                event_log, e_len = self._parse_event_log_body(self._data[start:])
                 index = start + e_len
                 self._event_logs.append(event_log)
                 self._count += 1
 
-    def _parse_header(self, data:bytes, start_addr:int) -> int:
-        """
-        Parse TCG special Id event according to TCG spec at
+    def _parse_header(self, data:bytes) -> int:
+        """Parse TCG special Id event according to TCG spec at
         https://trustedcomputinggroup.org/wp-content/uploads/TCG_PCClientSpecPlat_TPM_2p0_1p04_pub.pdf
 
+        Event Structure:
         typedef tdTCG_PCClientPCREvent {
             2735 UINT32 pcrIndex;
             UINT32 eventType;
@@ -138,10 +180,20 @@ class TcgEventLog:
             UINT32 eventDataSize;
             BYTE event[eventDataSize]; //This is actually a TCG_EfiSpecIDEventStruct
         } TCG_PCClientPCREvent;
+
+        Args:
+            start_addr: index of the first event log to collect
+            log_len: event log data total length
+
+        Returns:
+            None
+
+        Raises:
+            None
         """
         index = 0
 
-        blob = BinaryBlob(data, start_addr)
+        blob = BinaryBlob(data, 0)
 
         imr_index, index = blob.get_uint32(index)
         header_imr = imr_index - 1
@@ -180,9 +232,8 @@ class TcgEventLog:
 
         return index
 
-    def _parse_event_log_body(self, data:bytes, start_addr:int) -> (TcgImrEventLogEntry, int):
-        """
-        Parse TCG event log body as single event log entry (TcgImrEventLogEntry) defined at
+    def _parse_event_log_body(self, data:bytes) -> (TcgImrEventLogEntry, int):
+        """Parse TCG event log body as single event log entry (TcgImrEventLogEntry) defined at
         https://trustedcomputinggroup.org/wp-content/uploads/TCG_PCClientSpecPlat_TPM_2p0_1p04_pub.pdf
 
         typedef struct tdTCG_PCR_EVENT2{
@@ -193,10 +244,19 @@ class TcgEventLog:
             BYTE event[eventSize];
         } TCG_PCR_EVENT2;
 
+        Args:
+            start_addr: index of the first event log to collect
+            log_len: event log data total length
+
+        Returns:
+            None
+
+        Raises:
+            None
         """
         index = 0
 
-        blob = BinaryBlob(data, start_addr)
+        blob = BinaryBlob(data, 0)
 
         imr_index, index = blob.get_uint32(index)
         imr_index = imr_index - 1
@@ -209,7 +269,8 @@ class TcgEventLog:
             alg_id, index = blob.get_uint16(index)
             alg = next((alg for alg in self._spec_id_header_event.digest_sizes \
                     if alg.algo_id == alg_id), None)
-            assert alg is not None, 'No algorithm with such algo_id found'
+            if alg is None:
+                raise ValueError(f'No algorithm with such algo_id {alg_id} found')
             digest_size = alg.digest_size
             digest_data, index = blob.get_bytes(index, digest_size)
             digest = TcgDigest(alg_id, digest_data)
