@@ -315,7 +315,25 @@ class TdxVM(ConfidentialVM):
 
 
     def get_quote(self, nonce: bytearray, data: bytearray, extraArgs) -> Quote:
-        """Get quote."""
+        """Get quote.
+
+        This depends on Quote Generation Service. Please reference "Whitepaper:
+        Linux* Stacks for Intel® Trust Domain Extensions (4.3 Attestation)" for
+        settings:
+        https://www.intel.com/content/www/us/en/content-details/790888/whitepaper-linux-stacks-for-intel-trust-domain-extensions-1-5.html
+
+        1. Set up the host: follow 4.3.1 ~ 4.3.4.
+        2. Set up the guest: follow "Approach 2: Get quote via TDG.VP.VMCALL.GETQUOTE"
+        in "4.3.5.1 Launch TD with Quote Generation Support".
+
+        Args:
+        nonce (bytearray): against replay attacks.
+        data (bytearray): user data
+        extraArgs: for TPM, it will be given list of IMR/PCRs
+
+        Returns:
+            The ``Quote`` object.
+        """
 
         # Prepare user defined data which could include nonce
         if nonce is not None:
@@ -343,9 +361,9 @@ class TdxVM(ConfidentialVM):
         dev_path = self.DEVICE_NODE_PATH[self.version]
         try:
             tdx_dev = os.open(dev_path, os.O_RDWR)
-        except (PermissionError, IOError, OSError):
-            LOG.error("Fail to open device node %s", dev_path)
-            return False
+        except (PermissionError, IOError, OSError) as e:
+            LOG.error("Fail to open device node %s: %s", dev_path, str(e))
+            return None
         LOG.debug("Successful open device node %s", dev_path)
 
         # Run ioctl command to get TD Quote
@@ -357,10 +375,10 @@ class TdxVM(ConfidentialVM):
         req_buf = quote_req.prepare_reqbuf(report_bytes)
         try:
             fcntl.ioctl(tdx_dev, self.IOCTL_GET_QUOTE[self.version], req_buf)
-        except OSError:
-            LOG.error("Fail to execute ioctl for file %s", dev_path)
+        except OSError as e:
+            LOG.error("Fail to execute ioctl for file %s: %s", dev_path, str(e))
             os.close(tdx_dev)
-            return False
+            return None
         LOG.debug("Successful get Quote from %s.", dev_path)
         os.close(tdx_dev)
 

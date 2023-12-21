@@ -119,7 +119,7 @@ class TdxQuoteHeader(BinaryBlob):
         """
         Dump data. Default format is raw.
         """
-        info(f'{indent}{type(self).__name__}:')
+        info(f'{indent}TD Quote Header:')
         if fmt == DUMP_FORMAT_HUMAN:
             i = indent + "  "
             info(f'{i}Header Version: {self.ver}')
@@ -273,7 +273,7 @@ class TdxQuoteBody(BinaryBlob):
         """
         Dump data. Default format is raw.
         """
-        info(f'{indent}{type(self).__name__}:')
+        info(f'{indent}TD Quote Body:')
         if fmt == DUMP_FORMAT_HUMAN:
             i = indent + "  "
             self.tee_tcb_svn.dump(fmt, i)
@@ -378,7 +378,7 @@ class TdxQuoteEcdsa256Sigature(QuoteSignature):
         """
         Dump data. Default format is raw.
         """
-        info(f'{indent}{type(self).__name__}:')
+        info(f'{indent}TD Quote Signature:')
         if fmt == DUMP_FORMAT_HUMAN:
             i = indent + "  "
             info(f'{i}Quote Signature (ECDSA P-256 Signature): 0x{self.sig.hex()}')
@@ -396,11 +396,11 @@ class TdxQuoteSignature(QuoteSignature):
     def __init__(self, data: bytearray):
         super().__init__(data)
 
-    def dump(self, fmt=DUMP_FORMAT_RAW):
+    def dump(self, fmt=DUMP_FORMAT_RAW, indent=""):
         """
         Dump data. Default format is raw.
         """
-        info(f'{type(self).__name__}:')
+        info(f'{indent}TD Quote Signature:')
         if fmt == DUMP_FORMAT_HUMAN:
             info("")
         else:
@@ -481,20 +481,18 @@ class TdxQuote(Quote):
         Raises:
             None
         """
-        info(f'{type(self).__name__}:')
-        if is_raw is True:
-            out_format = DUMP_FORMAT_RAW
-        else:
+        info("======================================")
+        info("TD Quote")
+        info("======================================")
+        out_format = DUMP_FORMAT_RAW
+        if is_raw is not True:
             out_format = DUMP_FORMAT_HUMAN
-        h = self.header
-        if h is not None:
-            h.dump(fmt=out_format)
-        b = self.body
-        if b is not None:
-            b.dump(fmt=out_format)
-        s = self.sig
-        if s is not None:
-            s.dump(fmt=out_format)
+        if self.header is not None:
+            self.header.dump(fmt=out_format)
+        if self.body is not None:
+            self.body.dump(fmt=out_format)
+        if self.sig is not None:
+            self.sig.dump(fmt=out_format)
 
 class TdxQuoteReq(ABC):
 

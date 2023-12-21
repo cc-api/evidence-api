@@ -45,6 +45,9 @@ def main():
     quote = CCTrustedVmSdk.inst().get_quote(None, None, None)
     if quote is not None:
         quote.dump(args.out_format == OUT_FORMAT_RAW)
+    else:
+        LOG.error("Fail to get Quote!")
+        LOG.error("Please double check the log and your config!")
 
 if __name__ == "__main__":
     main()
