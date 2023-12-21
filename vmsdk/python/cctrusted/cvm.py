@@ -23,25 +23,6 @@ from cctrusted_base.tdx.report import TdxReportReq10, TdxReportReq15
 
 LOG = logging.getLogger(__name__)
 
-class CcDeviceNode(ABC):
-
-    @property
-    @abstractmethod
-    def device_node_path(self) -> str:
-        """
-        Return the name of device node
-        """
-        raise NotImplementedError("Need implement in inherited class")
-
-class TdxDeviceNode(CcDeviceNode):
-
-    DEVICE_NODE_NAME_1_0 = "/dev/tdx-guest"
-    DEVICE_NODE_NAME_1_5 = "/dev/tdx_guest"
-
-    @property
-    def device_node_path(self) -> str:
-        return TdxDeviceNode.DEVICE_NODE_NAME_1_5
-
 class ConfidentialVM:
 
     TYPE_CC_NONE = -1
@@ -70,58 +51,46 @@ class ConfidentialVM:
 
     @property
     def cc_type(self) -> int:
-        """
-        CC type like TYPE_CC_TDX, TYPE_CC_SEV etc
-        """
+        """CC type like TYPE_CC_TDX, TYPE_CC_SEV etc."""
         return self._cc_type
 
     @property
     @abstractmethod
     def default_algo_id(self):
-        """
-        Default algorithms ID supported by this Confidential VM
-        """
+        """Default algorithms ID supported by this Confidential VM."""
         raise NotImplementedError("Should be implemented by inherited class")
 
     @property
     @abstractmethod
     def version(self):
-        """
-        Version of CC VM
-        """
+        """Version of CC VM."""
         raise NotImplementedError("Should be implemented by inherited class")
 
     @property
     def imrs(self) -> list[TcgIMR]:
-        """
-        The array of integrated measurement registers (IMR)
-        """
+        """The array of integrated measurement registers (IMR)."""
         return self._imrs
 
     @property
     def cc_type_str(self):
-        """
-        Return the CC type string
-        """
+        """the CC type string."""
         return ConfidentialVM.TYPE_CC_STRING[self.cc_type]
 
     @property
     def cc_event_log(self):
-        """
-        return event log data blob
-        """
+        """event log data blob."""
         return self._cc_event_log
 
     @property
     def ccel_data(self):
-        """
-        return ccel data blob
-        """
+        """ccel data blob."""
         return self._ccel_data
 
     def init(self) -> bool:
-        """
-        Initialize the CC stub and environment
+        """Initialize the CC stub and environment.
+
+        Returns:
+            Success or not
         """
         if self._is_init:
             return True
@@ -137,9 +106,7 @@ class ConfidentialVM:
 
     @staticmethod
     def detect_cc_type():
-        """
-        Detect the type of current confidential VM
-        """
+        """Detect the type of current confidential VM"""
         # TODO: refine the justification
         for devpath in TdxVM.DEVICE_NODE_PATH.values():
             if os.path.exists(devpath):
@@ -147,30 +114,45 @@ class ConfidentialVM:
         return ConfidentialVM.TYPE_CC_NONE
 
     @abstractmethod
-    def process_cc_report(self):
-        """
-        Process the confidential computing REPORT.
+    def process_cc_report(self) -> bool:
+        """Process the confidential computing REPORT.
+
+        Returns:
+            Success or not.
         """
         raise NotImplementedError("Should be implemented by inherited class")
 
     @abstractmethod
-    def process_eventlog(self):
-        """
-        Process the event log
+    def process_eventlog(self) -> bool:
+        """Process the event log.
+
+        Returns:
+            Success or not.
         """
         raise NotImplementedError("Should be implemented by inherited class")
 
     @abstractmethod
     def get_quote(self, nonce: bytearray, data: bytearray, extraArgs) -> Quote:
-        """
-        Get quote
+        """Get the quote for given nonce and data.
+
+        The quote is signing of attestation data (IMR values or hashes of IMR
+        values), made by a trusted foundation (TPM) using a key trusted by the
+        verifier.
+
+        Different trusted foundation may use different quote format.
+
+        Args:
+            nonce (bytearray): against replay attacks.
+            data (bytearray): user data
+            extraArgs: for TPM, it will be given list of IMR/PCRs
+
+        Returns:
+            The ``Quote`` object.
         """
         raise NotImplementedError("Should be implemented by inherited class")
 
     def dump(self):
-        """
-        Dump confidential VM information
-        """
+        """Dump confidential VM information."""
         LOG.info("======================================")
         LOG.info("CVM type = %s", self.cc_type_str)
         LOG.info("CVM version = %s", self.version)
@@ -178,9 +160,7 @@ class ConfidentialVM:
 
     @staticmethod
     def inst():
-        """
-        Singleton interface for the instance of CcLinuxStub
-        """
+        """Singleton interface for the instance of CcLinuxStub"""
         if ConfidentialVM._inst is None:
             cc_type = ConfidentialVM.detect_cc_type()
             if cc_type is ConfidentialVM.TYPE_CC_TDX:
@@ -260,15 +240,11 @@ class TdxVM(ConfidentialVM):
 
     @property
     def tdreport(self):
-        """
-        return TDREPORT structure
-        """
+        """TDREPORT structure"""
         return self._tdreport
 
     def process_cc_report(self) -> bool:
-        """
-        Process the confidential computing REPORT.
-        """
+        """Process the confidential computing REPORT."""
         dev_path = self.DEVICE_NODE_PATH[self.version]
         try:
             tdx_dev = os.open(dev_path, os.O_RDWR)
@@ -310,9 +286,7 @@ class TdxVM(ConfidentialVM):
         return True
 
     def process_eventlog(self) -> bool:
-        """
-        Process the event log
-        """
+        """Process the event log."""
         if not os.path.exists(ConfidentialVM.CCEL_TABLE_FILE):
             LOG.error("Failed to find TDX CCEL table at %s", ConfidentialVM.CCEL_TABLE_FILE)
             return False
@@ -342,9 +316,7 @@ class TdxVM(ConfidentialVM):
 
 
     def get_quote(self, nonce: bytearray, data: bytearray, extraArgs) -> Quote:
-        """
-        Get TDX quote
-        """
+        """Get quote."""
 
         # Prepare user defined data which could include nonce
         if nonce is not None:

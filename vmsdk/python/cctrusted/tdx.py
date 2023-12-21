@@ -8,6 +8,8 @@ from cctrusted.cvm import TdxVM
 
 class CCTrustedTdvmSdk(CCTrustedVmSdk):
 
+    """Inherited SDK class for TDVM only."""
+
     def get_tdreport(self) -> TdReport:
         """Get TDX Report
 
