@@ -31,8 +31,16 @@ class TcgAlgorithmRegistry:
 
     @staticmethod
     def get_algorithm_string(alg_id: int) -> str:
-        """
-        Return algorithms name from ID
+        """Return algorithms name from ID
+
+        Args:
+            alg_id: algorithm ID
+
+        Returns:
+            A string containing the corresponding algorithm name
+
+        Raises:
+            None
         """
         if alg_id in TcgAlgorithmRegistry.TPM_ALG_TABLE:
             return TcgAlgorithmRegistry.TPM_ALG_TABLE[alg_id]
@@ -152,14 +160,22 @@ class TcgEventType:
     }
 
     def __init__(self, event_type:int) -> None:
-        assert event_type in TcgEventType.TCG_EVENT_TYPE_TABLE, \
-            "invalid parameter event_type"
+        if event_type in TcgEventType.TCG_EVENT_TYPE_TABLE:
+            raise ValueError(f'invalid parameter event_type {event_type}')
         self._event_type = event_type
 
     @staticmethod
     def get_event_type_string(event_type:int) -> str:
-        """
-        Get event type string
+        """Get event type string from index
+
+        Args:
+            event_type: event type value
+
+        Returns:
+            A string specifying the human readable event type
+
+        Raises:
+            None
         """
         if event_type in TcgEventType.TCG_EVENT_TYPE_TABLE:
             return TcgEventType.TCG_EVENT_TYPE_TABLE[event_type]
@@ -179,10 +195,10 @@ class TcgEventType:
         return self.get_event_type_string(self._event_type)
 
 class TcgImrEventLogEntry:
-    """
-    TCG IMR Event struct defined at
+    """TCG IMR Event struct defined at
     https://trustedcomputinggroup.org/wp-content/uploads/TCG_EFI_Platform_1_22_Final_-v15.pdf
 
+    Definition:
     typedef struct tdTCG_PCR_EVENT2{
         UINT32 pcrIndex;
         UINT32 eventType;
@@ -254,10 +270,10 @@ class TcgImrEventLogEntry:
             count += 1
 
 class TcgPcClientImrEvent:
-    """
-    TCG TCG_PCClientPCREvent defined at
+    """TCG TCG_PCClientPCREvent defined at
     https://trustedcomputinggroup.org/wp-content/uploads/TCG_PCClientSpecPlat_TPM_2p0_1p04_pub.pdf
 
+    Definition:
     typedef tdTCG_PCClientPCREvent {
         UINT32 pcrIndex;
         UINT32 eventType;
@@ -322,10 +338,10 @@ class TcgPcClientImrEvent:
         blob.dump()
 
 class TcgEfiSpecIdEvent:
-    """
-    TCG TCG_EfiSpecIDEventStruct defined at
+    """TCG TCG_EfiSpecIDEventStruct defined at
     https://trustedcomputinggroup.org/wp-content/uploads/EFI-Protocol-Specification-rev13-160330final.pdf
 
+    Definition:
     typedef struct tdTCG_EfiSpecIdEventStruct {
         BYTE[16] signature;
         UINT32 platformClass;
@@ -412,10 +428,10 @@ class TcgEfiSpecIdEvent:
         return self._digest_sizes
 
 class TcgEfiSpecIdEventAlgorithmSize:
-    """
-    TCG TCG_EfiSpecIdEventAlgorithmSize defined at
+    """TCG TCG_EfiSpecIdEventAlgorithmSize defined at
     https://trustedcomputinggroup.org/wp-content/uploads/EFI-Protocol-Specification-rev13-160330final.pdf
 
+    Definiton:
     typedef struct tdTCG_EfiSpecIdEventAlgorithmSize {
         UINT16 algorithmId;
         UINT16 digestSize;
