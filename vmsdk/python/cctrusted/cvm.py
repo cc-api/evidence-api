@@ -12,7 +12,7 @@ import os
 import logging
 import struct
 import fcntl
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from cctrusted_base.imr import TdxRTMR,TcgIMR
 from cctrusted_base.quote import Quote
 from cctrusted_base.ccel import CCEL
@@ -42,7 +42,6 @@ class ConfidentialVM:
     _inst = None
 
     def __init__(self, cctype):
-        self._device_node:CcDeviceNode = None
         self._cc_type:int = cctype
         self._is_init:bool = False
         self._imrs:dict[int, TcgIMR] = {}
