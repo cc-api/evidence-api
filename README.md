@@ -57,15 +57,15 @@ The back-end SDK or service will produce the TCB measurements:
 The example code is refer to [here](/vmsdk/python/cc_imr_cli.py) as follows:
 
 ```
-import cctrusted
+from cctrusted import CCTrustedVmSdk
 
 # Get total count of measurement registers, Intel TDX is 4, vTPM is 24
-count = cctrusted.get_measurement_count()
-for index in range(cctrusted.get_measurement_count()):
+count = CCTrustedVmSdk.inst().get_measurement_count()
+for index in range(CCTrustedVmSdk.inst().get_measurement_count()):
     # Get default digest algorithms, Intel TDX is SHA384, vTPM is SHA256
-    alg = cctrusted.get_default_algorithms()
+    alg = CCTrustedVmSdk.inst().get_default_algorithms()
     # Get digest object for given index and given algorithms
-    digest_obj = cctrusted.get_measurement([index, alg.alg_id])
+    digest_obj = CCTrustedVmSdk.inst().get_measurement([index, alg.alg_id])
 
     hash_str = ""
     for hash_item in digest_obj.hash:
@@ -115,9 +115,9 @@ __main__ INFO     HASH: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
 The example code is refer to [here](/vmsdk/python/td_report_cli.py) or as follows:
 
 ```
-import cctrusted
+from cctrusted import CCTrustedTdvmSdk
 
-tdreport = cctrusted.get_tdx_report()
+tdreport = CCTrustedTdvmSdk.inst().get_tdreport()
 tdreport.dump()
 ```
 
@@ -201,3 +201,56 @@ CVM version = 1.5
 Above structure is defined at [here](https://github.com/tianocore/edk2/blob/master/MdePkg/Include/IndustryStandard/Tdx.h):
 
 ![](/docs/tdreport-structure.png)
+
+### 4.3 Print Quote
+
+Please note that different trusted foundation may use different quote format.
+
+For TDX, the TD Quote format definition can be found in the spec [here](https://download.01.org/intel-sgx/latest/dcap-latest/linux/docs/Intel_TDX_DCAP_Quoting_Library_API.pdf). And TDX depends on the Quote Generation Service to generate the quote. Please reference "[Whitepaper: Linux* Stacks for Intel® Trust Domain Extensions 1.5 (4.3 Attestation)](https://www.intel.com/content/www/us/en/content-details/790888/whitepaper-linux-stacks-for-intel-trust-domain-extensions-1-5.html)" to set up the environment:
+
+        1. Set up the host: follow 4.3.1 ~ 4.3.4.
+
+        2. Set up the guest: follow "Approach 2: Get quote via TDG.VP.VMCALL.GETQUOTE" in "4.3.5.1 Launch TD with Quote Generation Support".
+
+The example code is refer to [here](/vmsdk/python/cc_quote_cli.py) or as follows:
+
+```
+from cctrusted import CCTrustedVmSdk
+
+quote = CCTrustedVmSdk.inst().get_quote(None, None, None)
+if quote is not None:
+    quote.dump(args.out_format == OUT_FORMAT_RAW)
+```
+
+The example output is:
+
+```
+root@tdx-guest:/home/tdx/cc-trusted-api/vmsdk/python# python3 ./cc_quote_cli.py
+cctrusted.cvm DEBUG    Successful open device node /dev/tdx_guest
+cctrusted.cvm DEBUG    Successful read TDREPORT from /dev/tdx_guest.
+cctrusted.cvm DEBUG    Successful parse TDREPORT.
+cctrusted.cvm INFO     Using report data directly to generate quote
+cctrusted.cvm DEBUG    Successful open device node /dev/tdx_guest
+cctrusted.cvm DEBUG    Successful get Quote from /dev/tdx_guest.
+cctrusted_base.tdx.quote INFO     ======================================
+cctrusted_base.tdx.quote INFO     TD Quote
+cctrusted_base.tdx.quote INFO     ======================================
+cctrusted_base.tdx.quote INFO     TD Quote Header:
+cctrusted_base.binaryblob INFO     00000000  04 00 02 00 81 00 00 00 00 00 00 00 93 9A 72 33  ..............r3
+cctrusted_base.binaryblob INFO     00000010  F7 9C 4C A9 94 0A 0D B3 95 7F 06 07 C6 0E 85 25  ..L............%
+cctrusted_base.binaryblob INFO     00000020  C8 09 3C 0E A0 64 EF F1 29 6B 85 83 00 00 00 00  ..<..d..)k......
+cctrusted_base.tdx.quote INFO     TD Quote Body:
+cctrusted_base.binaryblob INFO     00000000  04 01 01 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+cctrusted_base.binaryblob INFO     00000010  97 90 D8 9A 10 21 0E C6 96 8A 77 3C EE 2C A0 5B  .....!....w<.,.[
+cctrusted_base.binaryblob INFO     00000020  5A A9 73 09 F3 67 27 A9 68 52 7B E4 60 6F C1 9E  Z.s..g'.hR{.`o..
+...
+cctrusted_base.binaryblob INFO     00000230  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+cctrusted_base.binaryblob INFO     00000240  00 00 00 00 00 00 00 00                          ........
+cctrusted_base.tdx.quote INFO     TD Quote Signature:
+cctrusted_base.binaryblob INFO     00000000  16 1F E4 F6 8C 05 D4 8F E2 EB EB C8 32 1A CE 6C  ............2..l
+cctrusted_base.binaryblob INFO     00000010  90 2A B5 EA 74 F5 4C 4D A2 6A 30 AC 5C A5 13 84  .*..t.LM.j0.\...
+cctrusted_base.binaryblob INFO     00000020  3D CB A2 31 20 43 8C 38 63 3D EE D1 7F B4 9F B5  =..1 C.8c=......
+...
+cctrusted_base.binaryblob INFO     000010D0  44 20 43 45 52 54 49 46 49 43 41 54 45 2D 2D 2D  D CERTIFICATE---
+cctrusted_base.binaryblob INFO     000010E0  2D 2D 0A 00                                      --..
+```
