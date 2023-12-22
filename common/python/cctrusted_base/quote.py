@@ -1,5 +1,5 @@
 """
-Quote data structures
+Quote data structures.
 """
 
 import logging
@@ -9,44 +9,29 @@ from cctrusted_base.binaryblob import BinaryBlob
 LOG = logging.getLogger(__name__)
 
 class QuoteData(BinaryBlob):
-    """
-    Quote Data
-    """
+    """Quote Data."""
 
 class QuoteSignature(BinaryBlob):
-    """
-    Quote Signature
-    """
+    """Quote Signature."""
 
 class Quote(BinaryBlob):
-    """
-    Quote abstract class (interface)
-    """
+    """Quote base class."""
 
     @abstractmethod
     def get_quoted_data(self) -> QuoteData:
-        """
-        Get quoted data
-        """
+        """Get quoted data."""
 
     @abstractmethod
     def get_sig(self) -> QuoteSignature:
-        """
-        Get quote signature
-        """
+        """Get quote signature."""
 
     @abstractmethod
     def dump(self, is_raw=True) -> None:
-        """
-        Dump Quote Data.
+        """Dump Quote Data.
 
         Args:
             is_raw:
-                True: dump in hex strings
-                False: dump in human readable texts
-        Returns:
-            None
-        Raises:
-            None
+                True: dump in hex strings.
+                False: dump in human readable texts.
         """
         raise NotImplementedError("Should be implemented by inherited class")
