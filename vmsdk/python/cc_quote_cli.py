@@ -26,7 +26,7 @@ def out_format_validator(out_format):
     return out_format
 
 def main():
-    """Example to call get_quote and dump the result to stdout"""
+    """Example to call get_quote and dump the result to stdout."""
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--out-format",

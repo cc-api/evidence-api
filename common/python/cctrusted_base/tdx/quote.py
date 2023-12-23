@@ -1,12 +1,12 @@
 """
-TDX Quote Related Classes
+TDX Quote related classes.
 """
 
-from abc import ABC, abstractmethod
 import ctypes
 import logging
 import struct
 
+from abc import ABC, abstractmethod
 from enum import Enum
 from cctrusted_base.binaryblob import BinaryBlob
 from cctrusted_base.quote import Quote, QuoteData, QuoteSignature
@@ -19,38 +19,33 @@ DUMP_FORMAT_RAW = "raw"
 DUMP_FORMAT_HUMAN = "human"
 
 def info(s: str):
-    """
-    Local wrapper function to log information
-    """
+    """Local wrapper function to log information."""
     LOG.info(s)
 
 class AttestationKeyType(Enum):
-    """
-    Attestation Key Type
-    """
+    """Attestation Key Type."""
     ECDSA_P256 = 2
     ECDSA_P384 = 3
 
 class TeeType(Enum):
-    """
-    TEE Type
-    """
+    """TEE Type."""
     TEE_SGX = 0x00000000
     TEE_TDX = 0x00000081
 
 QE_VENDOR_INTEL_SGX = "939a7233f79c4ca9940a0db3957f0607"
-"""
-QE Vendor ID. Unique identifier of the QE Vendor.
-e.g. Value: 939A7233F79C4CA9940A0DB3957F0607 (Intel® SGX QE Vendor)
-Note: Each vendor that decides to provide a customized Quote data structure should have
-unique ID.
+"""QE Vendor ID. Unique identifier of the QE Vendor.
+
+Note: Each vendor that decides to provide a customized Quote data
+structure should have unique ID.
+
+    e.g. Value: 939A7233F79C4CA9940A0DB3957F0607 (Intel® SGX QE Vendor)
 """
 
 class QeCertDataType(Enum):
-    """
-    QE Certification Data Type
+    """QE Certification Data Type.
+
     Definition reference:
-    https://download.01.org/intel-sgx/latest/dcap-latest/linux/docs/TDX_Quoting_Library_API.pdf
+    https://download.01.org/intel-sgx/latest/dcap-latest/linux/docs/Intel_TDX_DCAP_Quoting_Library_API.pdf
     A.3.9. QE Certification Data - Version 4
     """
     PCK_ID_PLAIN            = 1
@@ -62,10 +57,19 @@ class QeCertDataType(Enum):
     PLATFORM_MANIFEST       = 7 # Currently not supported
 
 class TdxQuoteHeader(BinaryBlob):
-    """
-    Quote Header
+    """TD Quote Header.
+
+    Attributes:
+        ver: An integer version of the Quote data structure.
+        ak_type: A ``AttestationKeyType`` indicating the type of the Attestation
+                Key used by the Quoting Enclave.
+        tee_type: A ``TeeType`` indicating the TEE for this attestation.
+        reserved_1: Reserved 2 bytes.
+        reserved_2: Reserved 2 bytes.
+        qe_vendor: Bytes indicating the Unique identifier of the QE Vendor.
+
     Definition reference:
-    https://download.01.org/intel-sgx/latest/dcap-latest/linux/docs/TDX_Quoting_Library_API.pdf
+    https://download.01.org/intel-sgx/latest/dcap-latest/linux/docs/Intel_TDX_DCAP_Quoting_Library_API.pdf
     A.3.1. TD Quote Header
 
     Size is count in bytes:
@@ -101,10 +105,13 @@ class TdxQuoteHeader(BinaryBlob):
     """
 
     def __init__(self, data: bytearray):
-        """
-        Init function does 2 things:
-            1. Save raw data in its super property.
-            2. Parse the raw data and save each field as the properties of its "self".
+        """Initialize attributes according to spec.
+
+        It saves raw data in the attribute of its super class and parses
+        the raw data and save each field as the attributes.
+
+        Args:
+            data: A bytearray of the raw data.
         """
         super().__init__(data)
         v = memoryview(self.data)
@@ -116,8 +123,13 @@ class TdxQuoteHeader(BinaryBlob):
         self.qe_vendor = v[12:28].tobytes()
 
     def dump(self, fmt=DUMP_FORMAT_RAW, indent=""):
-        """
-        Dump data. Default format is raw.
+        """Dump data.
+
+        Args:
+            fmt: A string indicating the output format.
+                    DUMP_FORMAT_RAW: dump in hex strings.
+                    DUMP_FORMAT_HUMAN: dump in human readable texts.
+            indent: A string indicating the prefixed indent for each line.
         """
         info(f'{indent}TD Quote Header:')
         if fmt == DUMP_FORMAT_HUMAN:
@@ -138,19 +150,32 @@ class TdxQuoteHeader(BinaryBlob):
             super().dump()
 
 class TdxQuoteTeeTcbSvn(BinaryBlob):
-    """
-    TEE TCB SVN structure in TD Quote Body
+    """TEE TCB SVN structure in TD Quote Body.
+
+    Atrributes:
+        data: A bytearray fo the raw data.
+
     Definition reference:
-    https://download.01.org/intel-sgx/latest/dcap-latest/linux/docs/TDX_Quoting_Library_API.pdf
+    https://download.01.org/intel-sgx/latest/dcap-latest/linux/docs/Intel_TDX_DCAP_Quoting_Library_API.pdf
     A.3.3. TEE_TCB_SVN
     """
 
     def __init__(self, data: bytearray):
+        """Initialize with raw data.
+
+        Args:
+            data: A bytearray of the raw data.
+        """
         super().__init__(data)
 
     def dump(self, fmt=DUMP_FORMAT_RAW, indent=""):
-        """
-        Dump data. Default format is raw.
+        """Dump data.
+
+        Args:
+            fmt: A string indicating the output format.
+                    DUMP_FORMAT_RAW: dump in hex strings.
+                    DUMP_FORMAT_HUMAN: dump in human readable texts.
+            indent: A string indicating the prefixed indent for each line.
         """
         info(f'{indent}{type(self).__name__}:')
         if fmt == DUMP_FORMAT_HUMAN:
@@ -176,8 +201,8 @@ class TdxQuoteTeeTcbSvn(BinaryBlob):
             super().dump()
 
 class TdxQuoteBody(BinaryBlob):
-    """
-    Quote Body for TDX.
+    """TD Quote Body.
+
     We define TdxQuoteBody as the base class of Version 4 Quote Format and Version 5 Quote Format.
     Quote Format Version        Architecture    Class Usage Comment
     4                           TDX 1.0         TdxQuoteBody
@@ -187,6 +212,24 @@ class TdxQuoteBody(BinaryBlob):
                                                     TEE_TCB_SVN_2
                                                     MRSERVICETD
     5                           SGX             TODO: should define a new independent class
+
+    Atrributes:
+        data: A bytearray fo the raw data.
+        tee_tcb_svn: A ``TdxQuoteTeeTcbSvn`` describing the TCB of TDX.
+        mrseam: A bytearray storing the Measurement of the TDX Module.
+        mrsignerseam: A bytearray that should be zero for the Intel TDX Module.
+        seamattributes: A bytearray storing SEAMATRIBUTES. Must be zero for TDX 1.0.
+        tdattributes: A bytearray indicating TD Attributes.
+        xfam: A bytearray storing XFAM (eXtended Features Available Mask).
+        mrtd: A bytearray storing Measurement of the initial contents of the TD.
+        mrconfig: A bytearray storing software-defined ID for non-owner-defined TD config.
+        mrowner: A bytearray storing software-defined ID for the TD's owner.
+        mrownerconfig: A bytearray storing software-defined ID for owner-defined TD config.
+        rtmr0: A bytearray storing runtime extendable measurement register 0.
+        rtmr1: A bytearray storing runtime extendable measurement register 1.
+        rtmr2: A bytearray storing runtime extendable measurement register 2.
+        rtmr3: A bytearray storing runtime extendable measurement register 3.
+        reportdata: A bytearray storing 64 bytes custom data to a TD Report.
 
     Definition reference:
     https://download.01.org/intel-sgx/latest/dcap-latest/linux/docs/Intel_TDX_DCAP_Quoting_Library_API.pdf
@@ -246,10 +289,13 @@ class TdxQuoteBody(BinaryBlob):
     """
 
     def __init__(self, data: bytearray):
-        """
-        Init function does 2 things:
-            1. Save raw data in its super property.
-            2. Parse the raw data and save each field as the properties of its "self".
+        """Initialize attributes according to spec.
+
+        It saves raw data in the attribute of its super class and parses
+        the raw data and save each field as the attributes.
+
+        Args:
+            data: A bytearray of the raw data.
         """
         super().__init__(data)
         v = memoryview(self.data)
@@ -270,8 +316,13 @@ class TdxQuoteBody(BinaryBlob):
         self.reportdata = v[520:584].tobytes()
 
     def dump(self, fmt=DUMP_FORMAT_RAW, indent=""):
-        """
-        Dump data. Default format is raw.
+        """Dump data.
+
+        Args:
+            fmt: A string indicating the output format.
+                    DUMP_FORMAT_RAW: dump in hex strings.
+                    DUMP_FORMAT_HUMAN: dump in human readable texts.
+            indent: A string indicating the prefixed indent for each line.
         """
         info(f'{indent}TD Quote Body:')
         if fmt == DUMP_FORMAT_HUMAN:
@@ -295,14 +346,31 @@ class TdxQuoteBody(BinaryBlob):
             super().dump()
 
 class TdxQuoteQeReportCert(BinaryBlob):
-    """
-    TDX Quote QE Report Certification Data
+    """TD Quote QE Report Certification Data.
+
+    Atrributes:
+        qe_report: A bytearray storing the SGX Report of the Quoting Enclave that
+                   generated an Attestation Key.
+        qe_report_sig: A bytearray storing ECDSA signature over the QE Report
+                       calculated using the Provisioning Certification Key (PCK).
+        qe_auth_cert: A bytearray storing the QE Authentication Data and QE
+                      Certification Data.
+
     Definition reference:
-    https://download.01.org/intel-sgx/latest/dcap-latest/linux/docs/TDX_Quoting_Library_API.pdf
+    https://download.01.org/intel-sgx/latest/dcap-latest/linux/docs/Intel_TDX_DCAP_Quoting_Library_API.pdf
     A.3.11. QE Report Certification Data
     """
 
     def __init__(self, data: bytearray):
+        """Initialize attributes according to spec.
+
+        It saves raw data in the attribute of its super class and parses
+        the raw data and save each field as the attributes.
+
+        Args:
+            data: A bytearray of the raw data.
+        """
+        # TODO: parse the raw data of each atrributes according to the spec.
         super().__init__(data)
         v = memoryview(self.data)
         self.qe_report = v[0:384].tobytes()
@@ -310,8 +378,13 @@ class TdxQuoteQeReportCert(BinaryBlob):
         self.qe_auth_cert = v[448:].tobytes()
 
     def dump(self, fmt=DUMP_FORMAT_RAW, indent=""):
-        """
-        Dump data. Default format is raw.
+        """Dump data.
+
+        Args:
+            fmt: A string indicating the output format.
+                    DUMP_FORMAT_RAW: dump in hex strings.
+                    DUMP_FORMAT_HUMAN: dump in human readable texts.
+            indent: A string indicating the prefixed indent for each line.
         """
         info(f'{indent}{type(self).__name__}:')
         if fmt == DUMP_FORMAT_HUMAN:
@@ -324,33 +397,51 @@ class TdxQuoteQeReportCert(BinaryBlob):
             super().dump()
 
 class TdxQuoteQeCert(BinaryBlob):
-    """
-    TDX Quote QE Certification Data
+    """TD Quote QE Certification Data.
+
+    Attributes:
+        cert_type: A ``QeCertDataType`` determining the type of data required to verify the
+                   QE Report Signature in the Quote Signature Data structure.
+        cert_data: A ``TdxQuoteQeReportCert`` storing the data required to verify the QE
+                   Report Signature depending on the value of the Certification Data Type.
+
     Definition reference:
-    https://download.01.org/intel-sgx/latest/dcap-latest/linux/docs/TDX_Quoting_Library_API.pdf
+    https://download.01.org/intel-sgx/latest/dcap-latest/linux/docs/Intel_TDX_DCAP_Quoting_Library_API.pdf
     A.3.9. QE Certification Data - Version 4
     """
 
     def __init__(self, data: bytearray):
+        """Initialize attributes according to spec.
+
+        It saves raw data in the attribute of its super class and parses
+        the raw data and save each field as the attributes.
+
+        Args:
+            data: A bytearray of the raw data.
+        """
         super().__init__(data)
         v = memoryview(self.data)
         self.cert_type = QeCertDataType(int.from_bytes(v[0:2].tobytes(), "little"))
-        self.cert_size = int.from_bytes(v[2:6].tobytes(), "little")
-        cert_data_end = 6 + self.cert_size
+        cert_size = int.from_bytes(v[2:6].tobytes(), "little")
+        cert_data_end = 6 + cert_size
         if self.cert_type == QeCertDataType.QE_REPORT_CERT:
             self.cert_data = TdxQuoteQeReportCert(v[6:cert_data_end].tobytes())
         else:
             self.cert_data = v[6:cert_data_end].tobytes()
 
     def dump(self, fmt=DUMP_FORMAT_RAW, indent=""):
-        """
-        Dump data. Default format is raw.
+        """Dump data.
+
+        Args:
+            fmt: A string indicating the output format.
+                    DUMP_FORMAT_RAW: dump in hex strings.
+                    DUMP_FORMAT_HUMAN: dump in human readable texts.
+            indent: A string indicating the prefixed indent for each line.
         """
         info(f'{indent}{type(self).__name__}:')
         if fmt == DUMP_FORMAT_HUMAN:
             i = indent + "  "
             info(f'{i}Quote QE Cert Data Type: {self.cert_type}')
-            info(f'{i}Quote QE Cert Data Size: {self.cert_size}')
             if self.cert_type == QeCertDataType.QE_REPORT_CERT:
                 self.cert_data.dump(fmt, i)
             else:
@@ -360,14 +451,32 @@ class TdxQuoteQeCert(BinaryBlob):
             super().dump()
 
 class TdxQuoteEcdsa256Sigature(QuoteSignature):
-    """
-    TDX Quote ECDSA 256-bit Quote Signature
+    """TD Quote ECDSA 256-bit Quote Signature.
+
+    Atrributes:
+        sig: A bytearray storing ECDSA signature over the Header and the TD
+             Quote Body calculated using the private part of the
+             Attestation Key generated by the Quoting Enclave.
+        ak: A bytearray storing Public part of the Attestation Key generated
+            by the Quoting Enclave.
+        qe_cert: A ``TdxQuoteQeCert`` storing the data required to verify
+                 the signature over QE Report and the Attestation Key.
+
     Definition reference:
-    https://download.01.org/intel-sgx/latest/dcap-latest/linux/docs/TDX_Quoting_Library_API.pdf
+    https://download.01.org/intel-sgx/latest/dcap-latest/linux/docs/Intel_TDX_DCAP_Quoting_Library_API.pdf
     A.3.8. ECDSA 256-bit Quote Signature Data Structure - Version 4
     """
 
     def __init__(self, data: bytearray):
+        """Initialize attributes according to spec.
+
+        It saves raw data in the attribute of its super class and parses
+        the raw data and save each field as the attributes.
+
+        Args:
+            data: A bytearray of the raw data.
+        """
+        # TODO: parse more details according to the spec.
         super().__init__(data)
         v = memoryview(self.data)
         self.sig = v[0:64].tobytes()
@@ -375,8 +484,13 @@ class TdxQuoteEcdsa256Sigature(QuoteSignature):
         self.qe_cert = TdxQuoteQeCert(v[128:].tobytes())
 
     def dump(self, fmt=DUMP_FORMAT_RAW, indent=""):
-        """
-        Dump data. Default format is raw.
+        """Dump data.
+
+        Args:
+            fmt: A string indicating the output format.
+                    DUMP_FORMAT_RAW: dump in hex strings.
+                    DUMP_FORMAT_HUMAN: dump in human readable texts.
+            indent: A string indicating the prefixed indent for each line.
         """
         info(f'{indent}TD Quote Signature:')
         if fmt == DUMP_FORMAT_HUMAN:
@@ -389,16 +503,24 @@ class TdxQuoteEcdsa256Sigature(QuoteSignature):
             super().dump()
 
 class TdxQuoteSignature(QuoteSignature):
-    """
-    TDX Quote Signature
-    """
+    """TD Quote Signature."""
 
     def __init__(self, data: bytearray):
+        """Initialize with raw data.
+
+        Args:
+            data: A bytearray of the raw data.
+        """
         super().__init__(data)
 
     def dump(self, fmt=DUMP_FORMAT_RAW, indent=""):
-        """
-        Dump data. Default format is raw.
+        """Dump data.
+
+        Args:
+            fmt: A string indicating the output format.
+                    DUMP_FORMAT_RAW: dump in hex strings.
+                    DUMP_FORMAT_HUMAN: dump in human readable texts.
+            indent: A string indicating the prefixed indent for each line.
         """
         info(f'{indent}TD Quote Signature:')
         if fmt == DUMP_FORMAT_HUMAN:
@@ -407,8 +529,13 @@ class TdxQuoteSignature(QuoteSignature):
             super().dump()
 
 class TdxQuote(Quote):
-    """
-    TDX Quote
+    """TDX Quote.
+
+    Atrributes:
+        header: A ``TdxQuoteHeader`` storing the data of Quote Header.
+        body: A ``TdxQuoteBody`` storing the data of TD Quote body.
+        sig: Quote Signature. Currently only support ``TdxQuoteEcdsa256Sigature``.
+
     Definition reference:
     https://download.01.org/intel-sgx/latest/dcap-latest/linux/docs/Intel_TDX_DCAP_Quoting_Library_API.pdf
     A.3. Version 4 Quote Format (TDX-ECDSA, SGX-ECDSA, and SGX-EPID)
@@ -435,6 +562,14 @@ class TdxQuote(Quote):
     """
 
     def __init__(self, data: bytearray):
+        """Initialize attributes according to spec.
+
+        It saves raw data in the attribute of its super class and parses
+        the raw data and save each field as the attributes.
+
+        Args:
+            data: A bytearray of the raw data.
+        """
         super().__init__(data)
         v = memoryview(self.data)
         self.header = TdxQuoteHeader(v[0:48].tobytes())
@@ -457,29 +592,28 @@ class TdxQuote(Quote):
             info(f'TD Quote Version {self.header.ver} is not supported!')
 
     def get_quoted_data(self) -> QuoteData:
-        """
-        Get TD Quoted Data
+        """Get TD Quoted Data.
+
+        Returns:
+            The intance of its ``QuoteData``.
         """
         return self.body
 
     def get_sig(self) -> QuoteSignature:
-        """
-        Get TD Quote signature
+        """Get TD Quote signature.
+
+        Returns:
+            The instance of its ``QuoteSignature``.
         """
         return self.sig
 
     def dump(self, is_raw=True) -> None:
-        """
-        Dump Quote Data.
+        """Dump Quote Data.
 
         Args:
             is_raw:
                 True: dump in hex strings
                 False: dump in human readable texts
-        Returns:
-            None
-        Raises:
-            None
         """
         info("======================================")
         info("TD Quote")
@@ -495,55 +629,101 @@ class TdxQuote(Quote):
             self.sig.dump(fmt=out_format)
 
 class TdxQuoteReq(ABC):
+    """TDX Quote Request."""
 
     def __init__(self, ver):
+        """Initialize TDX Quote Request.
+
+        Args:
+            ver: A string indicating the version of TDX.
+                 TDX_VERSION_1_0 or TDX_VERSION_1_5.
+        """
         self._version = ver
 
     @property
     def version(self):
-        """
-        The TDX version
+        """The TDX version.
+
+        Returns:
+            The version of TDX.
         """
         return self._version
 
     @abstractmethod
     def prepare_reqbuf(self, report_data=None) -> bytearray:
-        """
-        Return the request data for TD Quote
+        """Prepare request buffer.
+
+        Args:
+            report_data: TD report related data.
+
+        Returns:
+            A bytearray storing the request data for TD Quote.
         """
         raise NotImplementedError("Should be implemented by inherited class")
 
     @abstractmethod
     def process_output(self, rawdata) -> TdxQuote:
-        """
-        Process response data from IOCTL
+        """Process response data from IOCTL.
+
+        Args:
+            rawdata: A bytearray storing the response data from IOCTL.
+
+        Returns:
+            An instance of ``TdxQuote``.
         """
         raise NotImplementedError("Should be implemented by inherited class")
 
 class TdxQuoteReq10(TdxQuoteReq):
+    """TDX Quote Request for TDX 1.0."""
 
     def __init__(self):
+        """Initialize TDX Quote Request."""
         TdxQuoteReq.__init__(self, TDX_VERSION_1_0)
 
     def prepare_reqbuf(self, report_data=None) -> bytearray:
+        """Prepare request buffer.
+
+        Args:
+            report_data: TD report related data.
+
+        Returns:
+            A bytearray storing the request data for TD Quote.
+        """
         assert False, "Need implement later"
 
     def process_output(self, rawdata) -> TdxQuote:
+        """Process response data from IOCTL.
+
+        Args:
+            rawdata: A bytearray storing the response data from IOCTL.
+
+        Returns:
+            An instance of ``TdxQuote``.
+        """
         assert False, "Need implement later"
 
 class TdxQuoteReq15(TdxQuoteReq):
+    """TDX Quote Request for TDX 1.5."""
 
     # The length of the tdquote 4 pages
     TDX_QUOTE_LEN = 4 * 4096
 
     def __init__(self):
+        """Initialize TDX Quote Request."""
         TdxQuoteReq.__init__(self, TDX_VERSION_1_5)
         self.tdquote = None
 
     def qgs_msg_quote_req(self, tdreport):
-        '''
-        Method qgs_msg_quote_req generates QGS messages for tdquote
-        Refer: https://github.com/intel/SGXDataCenterAttestationPrimitives
+        """Generage QGS message to get TD Quote.
+
+        Args:
+            tdreport: Bytes of TD Report data.
+
+        Returns:
+            Bytes of the QGS message.
+
+        References:
+        https://github.com/intel/SGXDataCenterAttestationPrimitives
         qgs_msg_header_t & qgs_msg_get_quote_req_t
         uint16_t major_version = 1;
         uint16_t minor_version = 0;
@@ -555,7 +735,7 @@ class TdxQuoteReq15(TdxQuoteReq):
         uint32_t report_size = report_size; // cannot be 0
         uint32_t id_list_size = 0; // length of id_list, in byte, can be 0
         uint8_t report_id_list[] = NULL;
-        '''
+        """
         major_version = 1
         minor_version = 0
         msg_type = 0
@@ -574,10 +754,17 @@ class TdxQuoteReq15(TdxQuoteReq):
         return qgs_msg
 
     def prepare_reqbuf(self, report_data=None) -> bytearray:
-        '''
-        Method prepare_reqbuf creates a tdx_quote_req struct
-        with report_data. Refer TDX Guest Hypervisor Communication
-        Interface (GHCI) specification.
+        """Prepare request buffer.
+
+        Args:
+            report_data: TD report related data.
+
+        Returns:
+            A bytearray storing the request data for TD Quote.
+
+        It creates a tdx_quote_req struct with report_data. Refer TDX
+        Guest Hypervisor Communication Interface (GHCI) specification
+        for details.
         struct tdx_quote_hdr {
             /* Quote version, filled by TD */
             __u64 version;
@@ -590,9 +777,12 @@ class TdxQuoteReq15(TdxQuoteReq):
             /* Actual Quote data or TDREPORT on input */
             __u64 data[0];
         };
+
+        References:
         https://cdrdv2.intel.com/v1/dl/getContent/726792
         Intel TDX Guest-Hypervisor Communication Interface v1.5
-        '''
+        """
+
         report_size = len(report_data)
         version = 1
         status = 0
@@ -610,20 +800,32 @@ class TdxQuoteReq15(TdxQuoteReq):
         return reqbuf
 
     def qgs_msg_quote_resp(self, buf):
-        '''
-        Method qgs_msg_quote_resp parse tdquote from the response of QGS
-        Refer: https://github.com/intel/SGXDataCenterAttestationPrimitives
-        qgs_msg_header_t & qgs_msg_get_quote_resp_t
-        uint16_t major_version = 1;
-        uint16_t minor_version = 0;
-        uint32_t type = 1 (GET_QUOTE_RESP);
-        uint32_t size = header + quote;
-        uint32_t error_code = 0; // used in response only
+        """Get Quote from the response of QGS messages.
 
-        uint32_t selected_id_size;  // can be 0 in case only one id is sent in request
-        uint32_t quote_size;        // length of quote_data, in byte
-        uint8_t id_quote[];         // selected id followed by quote
-        '''
+        Args:
+            buf: Bytes storing the QGS message structs.
+
+        Returns:
+            Bytes of TD Quote data.
+
+        References:
+        https://github.com/intel/SGXDataCenterAttestationPrimitives/blob/master/QuoteGeneration/quote_wrapper/qgs_msg_lib/inc/qgs_msg_lib.h
+
+        typedef struct _qgs_msg_header_t {
+            uint16_t major_version;
+            uint16_t minor_version;
+            uint32_t type;
+            uint32_t size; // size of the whole message, include this header, in byte
+            uint32_t error_code; // used in response only
+        } qgs_msg_header_t;
+
+        typedef struct _qgs_msg_get_quote_resp_s {
+            qgs_msg_header_t header;    // header.type = GET_QUOTE_RESP
+            uint32_t selected_id_size;  // can be 0 in case only one id is sent in request
+            uint32_t quote_size;        // length of quote_data, in byte
+            uint8_t id_quote[];         // selected id followed by quote
+        } qgs_msg_get_quote_resp_t;
+        """
         msg_size = len(buf) - (16 + 8)
         major_version, minor_version, msg_type, msg_size, error_code, _, quote_size, quote = \
             struct.unpack(f"2H5I{msg_size}s", buf)
@@ -632,20 +834,44 @@ class TdxQuoteReq15(TdxQuoteReq):
         return quote[:quote_size]
 
     def get_tdquote_bytes_from_req(self, req):
-        '''
-        Method get_tdquote_bytes_from_req retrieves the tdquote in bytes
-        format from the tdx_report_req struct.
-        struct tdx_quote_req {
-            __u64 buf;
-            __u64 len;
-        };
-        '''
+        """Get the TD Quote in bytes format from the tdx_quote_req struct.
+
+        Args:
+            req: Bytes of the request struct "tdx_quote_req".
+
+        Returns:
+            Bytes of TD Quote data.
+
+        References:
+        Kernel source in include/uapi/linux/tdx-guest.h:
+
+            struct tdx_quote_req {
+                __u64 buf;
+                __u64 len;
+            };
+
+        struct tdx_quote_req: Request struct for TDX_CMD_GET_QUOTE IOCTL.
+        buf: Address of user buffer in the format of struct tdx_quote_buf.
+            Upon successful completion of IOCTL, output is copied back to
+            the same buffer (in struct tdx_quote_buf.data).
+        len: Length of the Quote buffer.
+        """
         buf_addr, buf_len = struct.unpack("QQ", req)
         buf = (ctypes.c_char * buf_len).from_address(buf_addr)
+        # Kernel source in include/uapi/linux/tdx-guest.h:
+        # struct tdx_quote_buf {
+        #     __u64 version;
+        #     __u64 status;
+        #     __u32 in_len;
+        #     __u32 out_len;
+        #     __u64 data[];
+        # };
         # sizeof(version + status + in_len + out_len) = 24
         # https://cdrdv2.intel.com/v1/dl/getContent/726792
         # Intel TDX Guest-Hypervisor Communication Interface v1.5
         #   Table 3-10: TDG.VP.VMCALL<GetQuote> - format of shared GPA
+        #       Data offset (bytes) is 24
+        #       Data length is "Size of shared GPA - 24"
         data_len = buf_len - 24
         _, _, _, out_len, data = struct.unpack(f"QQII{data_len}s", buf)
         data_len = int.from_bytes(data[:4], "big")
@@ -656,8 +882,13 @@ class TdxQuoteReq15(TdxQuoteReq):
         return tdquote
 
     def process_output(self, rawdata) -> TdxQuote:
-        """
-        Process response data from IOCTL
+        """Process response data from IOCTL.
+
+        Args:
+            rawdata: A bytearray storing the response data from IOCTL.
+
+        Returns:
+            An instance of ``TdxQuote``.
         """
         tdquote_bytes = self.get_tdquote_bytes_from_req(rawdata)
         return TdxQuote(tdquote_bytes)
