@@ -1,0 +1,13 @@
+[package]
+name = "cctrusted"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "cctrusted"
+path = "src/lib.rs"
+
+[dependencies]
+cctrusted_base = { path = "../../../common/rust/cctrusted_base" }
+anyhow = "1.0"
+log = "0.4.20"

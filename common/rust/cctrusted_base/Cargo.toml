@@ -1,0 +1,16 @@
+[package]
+name = "cctrusted_base"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "cctrusted_base"
+path = "src/lib.rs"
+
+[dependencies]
+anyhow = "1.0"
+base64 = "0.13.0"
+log = "0.4.20"
+sha2 = "0.10"
+nix = "0.26.2"
+lazy_static = "1.4.0"

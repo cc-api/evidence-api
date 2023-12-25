@@ -1,0 +1,14 @@
+[package]
+name = "cctrusted-sample"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "cc-sample"
+path = "src/cc-sample.rs"
+
+[dependencies]
+cctrusted = { path = "../cctrusted" }
+anyhow = "1.0"
+log = "0.4.20"
+env_logger = "0.10.0"
