@@ -345,16 +345,90 @@ class TdxQuoteBody(BinaryBlob):
         else:
             super().dump()
 
+class TdxEnclaveReportBody(BinaryBlob):
+    """TD Quote Enclave Report Body.
+
+    Atrributes:
+        cpu_svn: Bytes indicating the CPU SVN
+        miscselect: An integer indicating the MISCSELECT
+        reserved_1: Reserved.
+        attributes: Bytes storing the Attributes.
+        mrenclave: Bytes storing the MRENCLAVE.
+        reserved_2: Reserved.
+        mrsigner: Bytes storing the MRSIGNER.
+        reserved_3: Reserved.
+        isv_prodid: An integer indicating the ISV ProdID.
+        isv_svn: And integer indicating the ISV SVN.
+        reserved_4: Reserved.
+        report_data: Report Data.
+
+    Definition reference:
+    https://download.01.org/intel-sgx/latest/dcap-latest/linux/docs/Intel_TDX_DCAP_Quoting_Library_API.pdf
+    A.3.10. Enclave Report Body
+    """
+
+    def __init__(self, data: bytearray):
+        """Initialize attributes according to spec.
+
+        It saves raw data in the attribute of its super class and parses
+        the raw data and save each field as the attributes.
+
+        Args:
+            data: A bytearray of the raw data.
+        """
+        super().__init__(data)
+        v = memoryview(self.data)
+        self.cpu_svn = v[0:16].tobytes()
+        self.miscselect = int.from_bytes(v[16:20].tobytes(), "little")
+        self.reserved_1 = v[20:48].tobytes()
+        self.attributes = v[48:64].tobytes()
+        self.mrenclave = v[64:96].tobytes()
+        self.reserved_2 = v[96:128].tobytes()
+        self.mrsigner = v[128:160].tobytes()
+        self.reserved_3 = v[160:256].tobytes()
+        self.isv_prodid = int.from_bytes(v[256:258].tobytes(), "little")
+        self.isv_svn = int.from_bytes(v[258:260].tobytes(), "little")
+        self.reserved_4 = v[260:320].tobytes()
+        self.report_data = v[320:384].tobytes()
+
+    def dump(self, fmt=DUMP_FORMAT_RAW, indent=""):
+        """Dump data.
+
+        Args:
+            fmt: A string indicating the output format.
+                    DUMP_FORMAT_RAW: dump in hex strings.
+                    DUMP_FORMAT_HUMAN: dump in human readable texts.
+            indent: A string indicating the prefixed indent for each line.
+        """
+        info(f'{indent}{type(self).__name__}:')
+        if fmt == DUMP_FORMAT_HUMAN:
+            i = indent + "  "
+            info(f'{i}CPU SVN: 0x{self.cpu_svn.hex()}')
+            info(f'{i}MISCSELECT: {self.miscselect}')
+            info(f'{i}Reserved: 0x{self.reserved_1.hex()}')
+            info(f'{i}Attributes: 0x{self.attributes.hex()}')
+            info(f'{i}MRENCLAVE: 0x{self.mrenclave.hex()}')
+            info(f'{i}Reserved: 0x{self.reserved_2.hex()}')
+            info(f'{i}MRSIGNER: 0x{self.mrsigner.hex()}')
+            info(f'{i}Reserved: 0x{self.reserved_3.hex()}')
+            info(f'{i}ISV ProdID: {self.isv_prodid}')
+            info(f'{i}ISV SVN: {self.isv_svn}')
+            info(f'{i}Reserved: 0x{self.reserved_4.hex()}')
+            info(f'{i}Report Data: 0x{self.report_data.hex()}')
+        else:
+            # Default output raw data in hex string
+            super().dump()
+
 class TdxQuoteQeReportCert(BinaryBlob):
     """TD Quote QE Report Certification Data.
 
     Atrributes:
-        qe_report: A bytearray storing the SGX Report of the Quoting Enclave that
-                   generated an Attestation Key.
+        qe_report: A ``TdxEnclaveReportBody`` storing the SGX Report of the
+                   Quoting Enclave that generated an Attestation Key.
         qe_report_sig: A bytearray storing ECDSA signature over the QE Report
                        calculated using the Provisioning Certification Key (PCK).
-        qe_auth_cert: A bytearray storing the QE Authentication Data and QE
-                      Certification Data.
+        qe_auth_data: A bytearray storing the QE Authentication Data.
+        qe_cert_data: A ``TdxQuoteQeCert`` storing the QE Certification Data.
 
     Definition reference:
     https://download.01.org/intel-sgx/latest/dcap-latest/linux/docs/Intel_TDX_DCAP_Quoting_Library_API.pdf
@@ -370,12 +444,17 @@ class TdxQuoteQeReportCert(BinaryBlob):
         Args:
             data: A bytearray of the raw data.
         """
-        # TODO: parse the raw data of each atrributes according to the spec.
         super().__init__(data)
         v = memoryview(self.data)
-        self.qe_report = v[0:384].tobytes()
+        self.qe_report = TdxEnclaveReportBody(v[0:384].tobytes())
         self.qe_report_sig = v[384:448].tobytes()
-        self.qe_auth_cert = v[448:].tobytes()
+        auth_data_size = int.from_bytes(v[448:450], "little")
+        data_end = 450 + auth_data_size
+        if auth_data_size > 0:
+            self.qe_auth_data = v[450:(data_end)].tobytes()
+        else:
+            self.qe_auth_data = None
+        self.qe_cert_data = TdxQuoteQeCert(v[data_end:].tobytes())
 
     def dump(self, fmt=DUMP_FORMAT_RAW, indent=""):
         """Dump data.
@@ -389,9 +468,13 @@ class TdxQuoteQeReportCert(BinaryBlob):
         info(f'{indent}{type(self).__name__}:')
         if fmt == DUMP_FORMAT_HUMAN:
             i = indent + "  "
-            info(f'{i}Quote QE Report: 0x{self.qe_report.hex()}')
+            self.qe_report.dump(DUMP_FORMAT_HUMAN, i)
             info(f'{i}Quote QE Report Signature: 0x{self.qe_report_sig.hex()}')
-            info(f'{i}Quote QE Authentication & Cert Data: {self.qe_auth_cert.decode("utf-8")}')
+            if self.qe_auth_data is not None:
+                info(f'{i}Quote QE Authentication Data: 0x{self.qe_auth_data.hex()}')
+            else:
+                info(f'{i}Quote QE Authentication Data: None')
+            self.qe_cert_data.dump(DUMP_FORMAT_HUMAN, i)
         else:
             # Default output raw data in hex string
             super().dump()
@@ -444,6 +527,9 @@ class TdxQuoteQeCert(BinaryBlob):
             info(f'{i}Quote QE Cert Data Type: {self.cert_type}')
             if self.cert_type == QeCertDataType.QE_REPORT_CERT:
                 self.cert_data.dump(fmt, i)
+            elif self.cert_type == QeCertDataType.PCK_CERT_CHAIN:
+                info(f'{i}PCK Cert Chain (PEM, Leaf||Intermediate||Root):')
+                info(f'{self.cert_data.decode("utf-8")}')
             else:
                 info(f'{i}Quote QE Cert Data: {self.cert_data}')
         else:
