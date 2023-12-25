@@ -10,10 +10,10 @@
 pub struct ExtraArgs {}
 
 pub const TYPE_PLAIN: i8 = -1;
-pub const TYPE_TDX: i8 = 0;
-pub const TYPE_SEV: i8 = 1;
-pub const TYPE_CCA: i8 = 2;
-pub const TYPE_TPM: i8 = 3;
+pub const TYPE_TPM: i8 = 0;
+pub const TYPE_TDX: i8 = 1;
+pub const TYPE_SEV: i8 = 2;
+pub const TYPE_CCA: i8 = 3;
 
 // return of API get_cc_report()
 pub struct CcReport {

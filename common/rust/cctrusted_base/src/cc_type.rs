@@ -11,10 +11,10 @@ use crate::tdx::tdx::Tdx;
 #[derive(Clone, Eq, Hash, PartialEq)]
 pub enum TeeType {
     PLAIN = -1,
-    TDX = 0,
-    SEV = 1,
-    CCA = 2,
-    TPM = 3,
+    TPM = 0,
+    TDX = 1,
+    SEV = 2,
+    CCA = 3,
 }
 
 // TEE type to type name string mapping
