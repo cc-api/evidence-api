@@ -9,9 +9,8 @@ LOG = logging.getLogger(__name__)
 
 
 class TcgAlgorithmRegistry:
-    """
-    From TCG specification
-    https://trustedcomputinggroup.org/wp-content/uploads/TCG-_Algorithm_Registry_r1p32_pub.pdf
+    """From TCG specification
+    https://trustedcomputinggroup.org/wp-content/uploads/TCG-_Algorithm_Registry_r1p32_pub.pdf.
     """
 
     TPM_ALG_ERROR = 0x0
@@ -31,16 +30,13 @@ class TcgAlgorithmRegistry:
 
     @staticmethod
     def get_algorithm_string(alg_id: int) -> str:
-        """Return algorithms name from ID
+        """Return algorithms name from ID.
 
         Args:
             alg_id: algorithm ID
 
         Returns:
             A string containing the corresponding algorithm name
-
-        Raises:
-            None
         """
         if alg_id in TcgAlgorithmRegistry.TPM_ALG_TABLE:
             return TcgAlgorithmRegistry.TPM_ALG_TABLE[alg_id]
@@ -53,15 +49,11 @@ class TcgAlgorithmRegistry:
 
     @property
     def alg_id(self):
-        """
-        Property for algorithms ID
-        """
+        """Algorithms ID."""
         return self._alg_id
 
     def __str__(self):
-        """
-        Name string
-        """
+        """Name string."""
         return TcgAlgorithmRegistry.get_algorithm_string(self.alg_id)
 
 class TcgDigest:
@@ -76,21 +68,16 @@ class TcgDigest:
 
     @property
     def alg(self) -> TcgAlgorithmRegistry:
-        """
-        Algorithms for the hash of digest
-        """
+        """Algorithms for the hash of digest."""
         return TcgAlgorithmRegistry(self._alg_id)
 
     @property
     def hash(self) -> list:
-        """
-        Return the hash of digest
-        """
+        """Hash of digest."""
         return self._hash
 
 class TcgEventType:
-    """
-    TCG EventType defined at
+    """TCG EventType defined at
     https://trustedcomputinggroup.org/wp-content/uploads/TCG_EFI_Platform_1_22_Final_-v15.pdf
     """
 
@@ -166,16 +153,13 @@ class TcgEventType:
 
     @staticmethod
     def get_event_type_string(event_type:int) -> str:
-        """Get event type string from index
+        """Get event type string from index.
 
         Args:
             event_type: event type value
 
         Returns:
             A string specifying the human readable event type
-
-        Raises:
-            None
         """
         if event_type in TcgEventType.TCG_EVENT_TYPE_TABLE:
             return TcgEventType.TCG_EVENT_TYPE_TABLE[event_type]
@@ -183,20 +167,16 @@ class TcgEventType:
 
     @property
     def event_type(self) -> int:
-        """
-        Return event type
-        """
+        """Event type."""
         return self._event_type
 
     def __str__(self) -> str:
-        """
-        Event type string
-        """
+        """Event type string."""
         return self.get_event_type_string(self._event_type)
 
-class TcgImrEventLogEntry:
+class TcgImrEvent:
     """TCG IMR Event struct defined at
-    https://trustedcomputinggroup.org/wp-content/uploads/TCG_EFI_Platform_1_22_Final_-v15.pdf
+    https://trustedcomputinggroup.org/wp-content/uploads/TCG_EFI_Platform_1_22_Final_-v15.pdf.
 
     Definition:
     typedef struct tdTCG_PCR_EVENT2{
@@ -206,7 +186,6 @@ class TcgImrEventLogEntry:
         UINT32 eventSize;
         BYTE event[eventSize];
     } TCG_PCR_EVENT2;
- 
     """
 
     def __init__(self, imr_index:int, event_type:TcgEventType, digests:list[TcgDigest],
@@ -219,43 +198,31 @@ class TcgImrEventLogEntry:
 
     @property
     def imr_index(self) -> int:
-        """
-        Get IMR index
-        """
+        """IMR index of the event."""
         return self._imr_index
 
     @property
     def event_type(self) -> TcgEventType:
-        """
-        Get event type
-        """
+        """Event type of the event."""
         return self._event_type
 
     @property
     def digests(self) -> list[TcgDigest]:
-        """
-        Get digests
-        """
+        """Digests of the event."""
         return self._digests
 
     @property
     def event_size(self) -> int:
-        """
-        Get event size
-        """
+        """Event size of the event."""
         return self._event_size
 
     @property
     def event(self) -> bytes:
-        """
-        Get event data
-        """
+        """Event data."""
         return self._event
 
     def dump(self):
-        """
-        dump data
-        """
+        """Dump data."""
         LOG.info("-------------------------------Event Log Entry-----------------------------")
         LOG.info("IMR               : %d", self._imr_index)
         LOG.info("Type              : 0x%X (%s)", self._event_type,
@@ -271,7 +238,7 @@ class TcgImrEventLogEntry:
 
 class TcgPcClientImrEvent:
     """TCG TCG_PCClientPCREvent defined at
-    https://trustedcomputinggroup.org/wp-content/uploads/TCG_PCClientSpecPlat_TPM_2p0_1p04_pub.pdf
+    https://trustedcomputinggroup.org/wp-content/uploads/TCG_PCClientSpecPlat_TPM_2p0_1p04_pub.pdf.
 
     Definition:
     typedef tdTCG_PCClientPCREvent {
@@ -292,43 +259,31 @@ class TcgPcClientImrEvent:
 
     @property
     def imr_index(self):
-        """
-        Return IMR index
-        """
+        """IMR index of the event."""
         return self._imr_index
 
     @property
     def event_type(self):
-        """
-        Return event type
-        """
+        """Event type of the event."""
         return self._event_type
 
     @property
     def digest(self):
-        """
-        Return digest
-        """
+        """Digest of the event."""
         return self._digest
 
     @property
     def event_data_size(self):
-        """
-        Return event data size
-        """
+        """Event data size of the event."""
         return self._event_data_size
 
     @property
     def event(self):
-        """
-        Return event
-        """
+        """Event data."""
         return self._event
 
     def dump(self):
-        """
-        Dump data
-        """
+        """Dump data."""
         LOG.info("--------------------Header Specification ID Event--------------------------")
         LOG.info("IMR               : %d", self._imr_index)
         LOG.info("Type              : 0x%X (%s)", self._event_type,
@@ -339,7 +294,7 @@ class TcgPcClientImrEvent:
 
 class TcgEfiSpecIdEvent:
     """TCG TCG_EfiSpecIDEventStruct defined at
-    https://trustedcomputinggroup.org/wp-content/uploads/EFI-Protocol-Specification-rev13-160330final.pdf
+    https://trustedcomputinggroup.org/wp-content/uploads/EFI-Protocol-Specification-rev13-160330final.pdf.
 
     Definition:
     typedef struct tdTCG_EfiSpecIdEventStruct {
@@ -373,63 +328,57 @@ class TcgEfiSpecIdEvent:
 
     @property
     def signature(self) -> bytes:
-        """
-        Get signature
-        """
+        """Signature of the event."""
         return self._signature
 
     @property
     def platform_class(self) -> int:
-        """
-        Get platform class
-        """
+        """Platform class of the event."""
         return self._platform_class
 
     @property
     def spec_version_minor(self) -> int:
-        """
-        Get spec minor version
-        """
+        """Specification minor version of the event."""
         return self._spec_version_minor
 
     @property
     def sepc_version_major(self) -> int:
-        """
-        Get spec major version
-        """
+        """Specification major version of the event."""
         return self._sepc_version_major
 
     @property
     def spec_errata(self) -> int:
-        """
-        Get spec errata
-        """
+        """Specification errata of the event."""
         return self._spec_errata
 
     @property
     def uintn_size(self) -> int:
-        """
-        Get uintn size
-        """
+        """Uintn size of the event."""
         return self._uintn_size
 
     @property
     def number_of_algos(self) -> int:
-        """
-        Get number of algorithms
-        """
+        """Number of algorithms of the event."""
         return self._number_of_algos
 
     @property
     def digest_sizes(self):
-        """
-        Get digest size
-        """
+        """Digest size of the event."""
         return self._digest_sizes
+
+    @property
+    def vendor_info_size(self):
+        """Vendor info size of the event."""
+        return self._vendor_info_size
+
+    @property
+    def vendor_info(self):
+        """Vendor info of the event."""
+        return self._vendor_info
 
 class TcgEfiSpecIdEventAlgorithmSize:
     """TCG TCG_EfiSpecIdEventAlgorithmSize defined at
-    https://trustedcomputinggroup.org/wp-content/uploads/EFI-Protocol-Specification-rev13-160330final.pdf
+    https://trustedcomputinggroup.org/wp-content/uploads/EFI-Protocol-Specification-rev13-160330final.pdf.
 
     Definiton:
     typedef struct tdTCG_EfiSpecIdEventAlgorithmSize {
@@ -444,14 +393,10 @@ class TcgEfiSpecIdEventAlgorithmSize:
 
     @property
     def algo_id(self):
-        """
-        Get algorithm Id
-        """
+        """Algorithm Id."""
         return self._algo_id
 
     @property
     def digest_size(self):
-        """
-        Get digest_size
-        """
+        """Digest_size."""
         return self._digest_size

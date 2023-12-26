@@ -7,7 +7,7 @@ from cctrusted_base.binaryblob import BinaryBlob
 from cctrusted_base.tcg import TcgDigest
 from cctrusted_base.tcg import TcgEventType
 from cctrusted_base.tcg import TcgEfiSpecIdEvent
-from cctrusted_base.tcg import TcgImrEventLogEntry
+from cctrusted_base.tcg import TcgImrEvent
 from cctrusted_base.tcg import TcgEfiSpecIdEventAlgorithmSize
 from cctrusted_base.tcg import TcgPcClientImrEvent
 
@@ -15,68 +15,44 @@ from cctrusted_base.tcg import TcgPcClientImrEvent
 LOG = logging.getLogger(__name__)
 
 class TcgEventLog:
-    """
-    TcgEventLog class
+    """TcgEventLog class.
 
     This class contains the event logs following TCG specification.
 
     Attributes:
-        data: raw data containing all event logs
-        spec_id_header: the first Specification ID Header event log
-        spec_id_header_event: detail event of Specification ID Header event
+        data: raw data containing all boot time event logs
         event_logs: all parsed event logs
         count: total number of event logs
     """
+    spec_id_header_event = None
 
     def __init__(self, data:bytes) -> None:
         self._data = data
-        self._spec_id_header:TcgPcClientImrEvent = None
-        self._spec_id_header_event:TcgEfiSpecIdEvent = None
-        self._event_logs:list[TcgImrEventLogEntry] = []
+        self._event_logs = []
         self._count:int = 0
 
     @property
     def data(self):
-        """
-        Return raw data of TCG event logs
-        """
+        """Raw data of TCG event logs."""
         return self._data
 
     @property
-    def spec_id_header(self):
-        """
-        Return the Specification ID Version Event
-        """
-        return self._spec_id_header
-
-    @property
     def event_logs(self):
-        """
-        Return event logs except
-        the Specification ID Version Event
-        """
+        """Parsed event logs."""
         return self._event_logs
 
     @property
     def count(self):
-        """
-        Return number of event logs except header
-        """
+        """Total number of event logs."""
         return self._count
 
     def dump(self, is_raw=True) -> None:
-        """Dump event log data
+        """Dump event log data.
 
         Args:
             is_raw: indicator for dump output format
                 True: dump in hex strings
                 False: dump in human readable texts
-
-        Returns:
-            None
-
-        Raises:
-            None
         """
         if self._count == 0:
             LOG.info("No parsed event log found.")
@@ -89,60 +65,40 @@ class TcgEventLog:
             LOG.info("RAW DATA: ------------------------------------------------------------------")
             return
 
-        LOG.info("Header Event: ")
-        self._spec_id_header.dump()
         LOG.info("Event Log Entries:")
         for event in self._event_logs:
             event.dump()
 
     def select(self, start:int, count:int) -> None:
-        """Collect selected event logs according to user specification
+        """Collect selected event logs according to user input.
 
         Args:
             start: index of the first event log to collect
             count: total number of event logs to collect
-            start_addr: event log data base address
-            log_len: event log data total length
-
-        Returns:
-            None
-
-        Raises:
-            None
         """
         self._parse()
 
         if start is not None:
             if not 0 < start <= self._count:
-                LOG.error("Invalid input start. Start must be number larger than 0 \
-                      and smaller than total event log count.")
+                # pylint: disable-next=line-too-long
+                LOG.error("Invalid input start. Start must be number larger than 0 and smaller than total event log count.")
                 raise ValueError('Invalid parameter start.')
 
             self._event_logs = self._event_logs[start-1:]
 
         if count is not None:
             if not 0 < count <= len(self._event_logs):
-                LOG.error("Invalid input count. count must be number larger than 0 \
-                      and smaller than total event log count.")
+                # pylint: disable-next=line-too-long
+                LOG.error("Invalid input count. count must be number larger than 0 and smaller than total event log count.")
                 raise ValueError('Invalid parameter count.')
 
             self._event_logs = self._event_logs[:count]
 
     def _parse(self) -> None:
-        """Parse event log data into TCG compatible forms
+        """Parse event log data into TCG compatible forms.
 
         Run through all event log data and parse the contents accordingly
-        Save the parsed event logs into TcgEventLog
-
-        Args:
-            start_addr: index of the first event log to collect
-            log_len: event log data total length
-
-        Returns:
-            None
-
-        Raises:
-            None
+        Save the parsed event logs into TcgEventLog.
         """
         if self._data is None:
             LOG.error("Providing invalid data blob.")
@@ -159,18 +115,20 @@ class TcgEventLog:
                 break
 
             if event_type == TcgEventType.EV_NO_ACTION:
-                header_len = self._parse_header(self._data[start:])
-                index = start + header_len
+                spec_id_event, event_len = \
+                    self._parse_spec_id_event_log(self._data[start:])
+                index = start + event_len
+                self._event_logs.append(spec_id_event)
                 self._count += 1
             else:
-                event_log, e_len = self._parse_event_log_body(self._data[start:])
-                index = start + e_len
+                event_log, event_len = self._parse_event_log(self._data[start:])
+                index = start + event_len
                 self._event_logs.append(event_log)
                 self._count += 1
 
-    def _parse_header(self, data:bytes) -> int:
-        """Parse TCG special Id event according to TCG spec at
-        https://trustedcomputinggroup.org/wp-content/uploads/TCG_PCClientSpecPlat_TPM_2p0_1p04_pub.pdf
+    def _parse_spec_id_event_log(self, data:bytes) -> (TcgPcClientImrEvent, int):
+        """Parse TCG specification Id event according to TCG spec at
+        https://trustedcomputinggroup.org/wp-content/uploads/TCG_PCClientSpecPlat_TPM_2p0_1p04_pub.pdf.
 
         Event Structure:
         typedef tdTCG_PCClientPCREvent {
@@ -182,14 +140,11 @@ class TcgEventLog:
         } TCG_PCClientPCREvent;
 
         Args:
-            start_addr: index of the first event log to collect
-            log_len: event log data total length
+            data: event log data in bytes
 
         Returns:
-            None
-
-        Raises:
-            None
+            A TcgPcClientImrEvent containing the Specification ID version event
+            An int specifying the event size
         """
         index = 0
 
@@ -203,7 +158,7 @@ class TcgEventLog:
         header_event_size, index = blob.get_uint32(index) # 4 bytes containing event size
         header_event, _ = blob.get_bytes(index, header_event_size)
 
-        self._spec_id_header = TcgPcClientImrEvent(header_imr, header_event_type, digest,
+        specification_id_header = TcgPcClientImrEvent(header_imr, header_event_type, digest,
                                                    header_event_size, header_event)
 
         # Parse EFI Spec Id Event structure
@@ -224,15 +179,16 @@ class TcgEventLog:
             spec_id_vendor_info, index = blob.get_bytes(index, int(spec_id_vendor_size))
         else:
             spec_id_vendor_info = bytes()
-        self._spec_id_header_event = TcgEfiSpecIdEvent(spec_id_signature, spec_id_platform_cls,
-                                          spec_id_version_minor, spec_id_version_major,
-                                          spec_id_errata, spec_id_uint_size, spec_id_num_of_algo,
-                                          spec_id_digest_sizes, spec_id_vendor_size,
-                                          spec_id_vendor_info)
+        TcgEventLog.spec_id_header_event = \
+            TcgEfiSpecIdEvent(spec_id_signature, spec_id_platform_cls,
+                              spec_id_version_minor, spec_id_version_major,
+                              spec_id_errata, spec_id_uint_size, spec_id_num_of_algo,
+                              spec_id_digest_sizes, spec_id_vendor_size,
+                              spec_id_vendor_info)
 
-        return index
+        return specification_id_header, index
 
-    def _parse_event_log_body(self, data:bytes) -> (TcgImrEventLogEntry, int):
+    def _parse_event_log(self, data:bytes) -> (TcgImrEvent, int):
         """Parse TCG event log body as single event log entry (TcgImrEventLogEntry) defined at
         https://trustedcomputinggroup.org/wp-content/uploads/TCG_PCClientSpecPlat_TPM_2p0_1p04_pub.pdf
 
@@ -245,14 +201,11 @@ class TcgEventLog:
         } TCG_PCR_EVENT2;
 
         Args:
-            start_addr: index of the first event log to collect
-            log_len: event log data total length
+            data: event log data in bytes
 
         Returns:
-            None
-
-        Raises:
-            None
+            A TcgImrEvent containing the event information
+            An int specifying the event size
         """
         index = 0
 
@@ -267,8 +220,9 @@ class TcgEventLog:
         digests = []
         for _ in range(digest_count):
             alg_id, index = blob.get_uint16(index)
-            alg = next((alg for alg in self._spec_id_header_event.digest_sizes \
-                    if alg.algo_id == alg_id), None)
+            alg = next((alg for alg in \
+                        TcgEventLog.spec_id_header_event.digest_sizes \
+                        if alg.algo_id == alg_id), None)
             if alg is None:
                 raise ValueError(f'No algorithm with such algo_id {alg_id} found')
             digest_size = alg.digest_size
@@ -278,7 +232,7 @@ class TcgEventLog:
         event_size, index = blob.get_uint32(index)
         event, index = blob.get_bytes(index, event_size)
 
-        # Generate TcgImrEventLogEntry using the info parsed
-        entry = TcgImrEventLogEntry(imr_index, event_type, digests, event_size,
+        # Generate TcgImrEvent using the info parsed
+        entry = TcgImrEvent(imr_index, event_type, digests, event_size,
                                     event)
         return entry, index
