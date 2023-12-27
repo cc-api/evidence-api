@@ -1,0 +1,22 @@
+name: VMSDK Python Test
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'vmsdk/**/*.py'
+  pull_request:
+    paths:
+      - 'vmsdk/**/*.py'
+  workflow_dispatch:
+
+jobs:
+  vmsdk_pytest:
+    runs-on: [self-host, tdx-guest]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run PyTest for VMSDK
+        run: |
+          set -ex
+          sudo su -c "source setupenv.sh && python3 -m pytest -v ./vmsdk/python/tests/test_sdk.py"
