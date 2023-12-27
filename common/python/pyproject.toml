@@ -1,0 +1,30 @@
+[project]
+name = "cctrusted_base"
+version = "0.0.3"
+authors = [
+  { name="Lu, Ken", email="ken.lu@intel.com" },
+  { name="Zhang, Wenhui", email="wenhui.zhang@bytedance.com" },
+]
+description = "CC Trusted API Base SDK"
+readme = "README.md"
+license = { text="Apache Software License" }
+requires-python = ">=3.6"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: POSIX :: Linux",
+]
+dependencies = [
+]
+
+[project.urls]
+"Homepage" = "https://github.com/cc-api/cc-trusted-api"
+"Bug Tracker" = "https://github.com/cc-api/cc-trusted-api/issues"
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where=["."]
+include=["cctrusted_base"]
