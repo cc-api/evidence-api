@@ -3,8 +3,8 @@ Provide addtional TDVM SDK inherited from general CVM SDK.
 """
 
 from cctrusted_base.tdx.report import TdReport
-from cctrusted.sdk import CCTrustedVmSdk
-from cctrusted.cvm import TdxVM
+from cctrusted_vm.sdk import CCTrustedVmSdk
+from cctrusted_vm.cvm import TdxVM
 
 class CCTrustedTdvmSdk(CCTrustedVmSdk):
 

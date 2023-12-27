@@ -3,7 +3,7 @@
 Command line to dump the integrated measurement register
 """
 import logging
-from cctrusted import CCTrustedVmSdk
+from cctrusted_vm import CCTrustedVmSdk
 
 LOG = logging.getLogger(__name__)
 

@@ -3,7 +3,7 @@ Command line to get quote
 """
 import argparse
 import logging
-from cctrusted import CCTrustedVmSdk
+from cctrusted_vm import CCTrustedVmSdk
 
 LOG = logging.getLogger(__name__)
 OUT_FORMAT_RAW = "raw"

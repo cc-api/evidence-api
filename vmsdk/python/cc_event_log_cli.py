@@ -3,7 +3,7 @@ Command line to dump the cc event logs
 """
 import logging
 import argparse
-from cctrusted import CCTrustedVmSdk
+from cctrusted_vm import CCTrustedVmSdk
 
 
 LOG = logging.getLogger(__name__)
