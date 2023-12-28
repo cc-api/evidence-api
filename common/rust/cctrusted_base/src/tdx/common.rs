@@ -1,6 +1,8 @@
 #![allow(non_camel_case_types)]
 use crate::cc_type::*;
-use std::collections::HashMap;
+use hashbrown::HashMap;
+
+pub struct Tdx {}
 
 // TDX version ID
 #[derive(Clone, Eq, Hash, PartialEq)]
@@ -27,13 +29,6 @@ lazy_static! {
         map.insert(TdxVersion::TDX_1_5, TEE_TDX_1_5_PATH.to_string());
         map
     };
-}
-
-// TDX ioctl operation code to be used for get TDX quote and TD Report
-pub enum TdxOperation {
-    TDX_GET_TD_REPORT = 1,
-    TDX_1_0_GET_QUOTE = 2,
-    TDX_1_5_GET_QUOTE = 4,
 }
 
 // quote and tdreport length

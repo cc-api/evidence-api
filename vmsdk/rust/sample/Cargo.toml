@@ -8,7 +8,8 @@ name = "cc-sample"
 path = "src/cc-sample.rs"
 
 [dependencies]
-cctrusted = { path = "../cctrusted" }
+cctrusted_vm = { path = "../cctrusted_vm" }
+cctrusted_base = { path = "../../../common/rust/cctrusted_base" }
 anyhow = "1.0"
 log = "0.4.20"
-env_logger = "0.10.0"
+env_logger = "0.10.1"
