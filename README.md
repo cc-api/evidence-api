@@ -1,6 +1,8 @@
 [![Python Code Scan](https://github.com/cc-api/cc-trusted-api/actions/workflows/pylint.yaml/badge.svg)](https://github.com/cc-api/cc-trusted-api/actions/workflows/pylint.yaml)
 [![Document Scan](https://github.com/cc-api/cc-trusted-api/actions/workflows/doclint.yaml/badge.svg)](https://github.com/cc-api/cc-trusted-api/actions/workflows/doclint.yaml)
 [![Python License Check](https://github.com/cc-api/cc-trusted-api/actions/workflows/pylicense.yaml/badge.svg)](https://github.com/cc-api/cc-trusted-api/actions/workflows/pylicense.yaml)
+[![VMSDK Python Test](https://github.com/cc-api/cc-trusted-api/actions/workflows/vmsdk-test-python.yaml/badge.svg)](https://github.com/cc-api/cc-trusted-api/actions/workflows/vmsdk-test-python.yaml)
+
 # CC Trusted API
 
 CC Trusted API helps the diverse applications to access and process the trust states
@@ -14,15 +16,15 @@ computing environment.
 The diverse application in confidential computing could be firmware or monolithic application
 in Confidential VM(CVM), micro service or macro service on Kubernetes. Although
 different type application might get the trust states measured in different Trusted
-Computing Base (TCB), but the definition and structure of integrity measurement,
-event record follows [TCG PC Client Platform Firmware Profile Specification](https://trustedcomputinggroup.org/wp-content/uploads/TCG_PCClient_PFP_r1p05_v23_pub.pdf)
+Computing Base (TCB), the definition and structure of integrity measurement register and
+event log follows the below specifications.
 
 ![](docs/cc-trusted-api-usage.png)
 | TCB | Measured By | Specification |
 | --- | -------- | ------------- |
-| TEE | Vendor Secure Module like Intel TDX module, SEV secure processor | Vendor Specification like [Intel TDX Module Specification](https://cdrdv2-public.intel.com/733575/intel-tdx-module-1.5-base-spec-348549002.pdf) |
-| Firmware | [EFI_CC_MEASUREMENT_PROTOCOL](https://github.com/tianocore/edk2/blob/master/MdePkg/Include/Protocol/CcMeasurement.h) | [UEFI Specification 2.10](https://uefi.org/specs/UEFI/2.10/) |
-| Boot Loader | [EFI_CC_MEASUREMENT_PROTOCOL](https://github.com/tianocore/edk2/blob/master/MdePkg/Include/Protocol/CcMeasurement.h) | Grub2/Shim |
+| Initial TEE | Trusted Security Manager (TSM), such as Intel TDX module, SEV secure processor | Vendor Specification such as [Intel TDX Module 1.5 ABI Specification](https://cdrdv2.intel.com/v1/dl/getContent/733579) |
+| Firmware | EFI_CC_MEASUREMENT_PROTOCOL </br> CCEL ACPI Table </br> EFI_TCG2_PROTOCOL </br> TCG ACPI Table | [UEFI Specification 2.10](https://uefi.org/specs/UEFI/2.10/38_Confidential_Computing.html#virtual-platform-cc-event-log) </br> [ACPI Specification 6.5](https://uefi.org/specs/ACPI/6.5/05_ACPI_Software_Programming_Model.html#cc-event-log-acpi-table) </br> [TCG EFI Protocol Specification](https://trustedcomputinggroup.org/resource/tcg-efi-protocol-specification/) </br> [TCG ACPI Specification](https://trustedcomputinggroup.org/resource/tcg-acpi-specification/) |
+| Boot Loader | EFI_CC_MEASUREMENT_PROTOCOL </br> EFI_TCG2_PROTOCOL | Grub2/Shim |
 | OS | Integrity Measurement Architecture (IMA) | [Specification](https://sourceforge.net/p/linux-ima/wiki/Home/) |
 | Cloud Native | Confidential Cloud Native Primitives (CCNP) | [Repository](https://github.com/intel/confidential-cloud-native-primitives) |
 
@@ -33,10 +35,10 @@ In confidential computing environment, vTPM (virtual TPM) might be provided diff
 vendor or CSP, which root of trust should be hardened by vendor secure module. Some
 vendor also provided simplified solution:
 
-|    | Intel | vTPM |
-| --- | --- | --- |
-| Integrity Measurement Register | RTMR/MRTD | PCR |
-| Event Log ACPI table | CCEL | TPM2 |
+|           | Measurement Register | Event Log      | Specification |
+| --------- | -------------------- | ---------      | ------------- |
+| vTPM      | TPM PCR              | TCG2 Event Log | [TPM2 Specification](https://trustedcomputinggroup.org/resource/tpm-library-specification/) </br> [TCG PC Client Platform TPM Profile Specification](https://trustedcomputinggroup.org/resource/pc-client-platform-tpm-profile-ptp-specification/) </br> [TCG PC Client Platform Firmware Profile Specification](https://trustedcomputinggroup.org/resource/pc-client-specific-platform-firmware-profile-specification/) |
+| Intel TDX | TDX MRTD/RTMR        | CC Event Log   | [Intel TDX Module 1.5 Base Architecture Specification](https://cdrdv2.intel.com/v1/dl/getContent/733575) </br> [Intel TDX Virtual Firmware Design Guide](https://cdrdv2.intel.com/v1/dl/getContent/733585) </br> [td-shim specification](https://github.com/confidential-containers/td-shim/blob/main/doc/tdshim_spec.md) |
 
 ![](docs/cc-trusted-foundation.png)
 

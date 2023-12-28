@@ -9,7 +9,7 @@ from cctrusted_base.imr import TcgIMR
 from cctrusted_base.quote import Quote
 from cctrusted_base.eventlog import TcgEventLog
 from cctrusted_base.tcg import TcgAlgorithmRegistry
-from cctrusted.cvm import ConfidentialVM
+from cctrusted_vm.cvm import ConfidentialVM
 
 
 LOG = logging.getLogger(__name__)
