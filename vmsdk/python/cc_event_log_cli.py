@@ -8,7 +8,7 @@ from cctrusted_vm import CCTrustedVmSdk
 
 LOG = logging.getLogger(__name__)
 
-logging.basicConfig(level=logging.NOTSET, format='%(message)s')
+logging.basicConfig(level=logging.NOTSET, format='%(name)s %(levelname)-8s %(message)s')
 
 def main():
     """example cc event log fetching utility"""
