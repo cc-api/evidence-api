@@ -229,12 +229,15 @@ class TcgImrEvent:
                                  TcgEventType.get_event_type_string(self._event_type))
         count = 0
         for digest in self._digests:
-            LOG.info("Algorithm_id      : %d (%s)",digest.alg.alg_id,
+            LOG.info("Algorithm_id[%d]   : %d (%s)", count, digest.alg.alg_id,
                     TcgAlgorithmRegistry.get_algorithm_string(digest.alg.alg_id))
             LOG.info("Digest[%d]:", count)
             digest_blob = BinaryBlob(digest.hash)
             digest_blob.dump()
             count += 1
+        LOG.info("Event:")
+        event_blob = BinaryBlob(self._event)
+        event_blob.dump()
 
 class TcgPcClientImrEvent:
     """TCG TCG_PCClientPCREvent defined at
@@ -288,6 +291,9 @@ class TcgPcClientImrEvent:
         LOG.info("IMR               : %d", self._imr_index)
         LOG.info("Type              : 0x%X (%s)", self._event_type,
                 TcgEventType.get_event_type_string(self._event_type))
+        LOG.info("Digest:")
+        digest_blob = BinaryBlob(self._digest)
+        digest_blob.dump()
         LOG.info("Event:")
         blob = BinaryBlob(self._event)
         blob.dump()
