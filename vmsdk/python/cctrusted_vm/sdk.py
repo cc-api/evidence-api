@@ -86,7 +86,7 @@ class CCTrustedVmSdk(CCTrustedApi):
         if algo_id is None or algo_id is TcgAlgorithmRegistry.TPM_ALG_ERROR:
             algo_id = self._cvm.default_algo_id
 
-        return self._cvm.imrs[imr_index].digest(algo_id)
+        return self._cvm.imrs[imr_index]
 
     def get_quote(self, nonce: bytearray, data: bytearray, extraArgs=None) -> Quote:
         """Get the quote for given nonce and data.
