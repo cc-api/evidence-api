@@ -19,4 +19,12 @@ jobs:
       - name: Run PyTest for VMSDK
         run: |
           set -ex
-          sudo su -c "source setupenv.sh && python3 -m pytest -v ./vmsdk/python/tests/test_sdk.py"
+          # Set the "PYTHONDONTWRITEBYTECODE" and "no:cacheprovider" to prevent
+          # generated some intermediate files by root. Othwerwise, these
+          # files will fail the action/checkout in the next round of running
+          # due to the permission issue.
+          sudo su -c "source setupenv.sh && \
+                      pushd vmsdk/python/tests && \
+                      export PYTHONDONTWRITEBYTECODE=1 && \
+                      python3 -m pytest -p no:cacheprovider -v test_sdk.py && \
+                      popd"

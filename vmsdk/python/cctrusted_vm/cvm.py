@@ -13,10 +13,11 @@ import logging
 import struct
 import fcntl
 from abc import abstractmethod
-from cctrusted_base.imr import TdxRTMR,TcgIMR
+from cctrusted_base.imr import TcgIMR
 from cctrusted_base.quote import Quote
 from cctrusted_base.tcg import TcgAlgorithmRegistry
 from cctrusted_base.tdx.common import TDX_VERSION_1_0, TDX_VERSION_1_5
+from cctrusted_base.tdx.rtmr import TdxRTMR
 from cctrusted_base.tdx.quote import TdxQuoteReq10, TdxQuoteReq15
 from cctrusted_base.tdx.report import TdxReportReq10, TdxReportReq15
 

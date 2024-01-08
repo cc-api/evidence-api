@@ -66,7 +66,12 @@ class CCTrustedApi(ABC):
         raise NotImplementedError("Inherited SDK class should implement this.")
 
     @abstractmethod
-    def get_quote(self, nonce: bytearray, data: bytearray, extraArgs=None) -> Quote:
+    def get_quote(
+        self,
+        nonce: bytearray = None,
+        data: bytearray = None,
+        extraArgs = None
+    ) -> Quote:
         """Get the quote for given nonce and data.
 
         The quote is signing of attestation data (IMR values or hashes of IMR
