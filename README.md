@@ -44,31 +44,35 @@ vendor also provided simplified solution:
 
 ## 3. APIs
 
-CC Trusted APIs aims to collect confidential primitives (i.e., measurement, event log, quote) for zero-trust design, supporting multiple deploy environments (firmware/VM/cloud native cluster).
+CC Trusted APIs aims to collect confidential primitives (i.e., measurement, event log, quote) for zero-trust design, supporting multiple deployment environments (firmware/VM/cloud native cluster).
 The [APIs](common/python/cctrusted_base/api.py) are designed to be vendor agnostic and TCG compliant APIs. The APIs will keep evolving on demand. 
 
 | API | Description  | Parameters  | Response  |
 | --- | ------------- |----- |----- |
-| get_default_algorithms | Get the default Digest algorithms supported by trusted foundation. | | The default algorithms |
-| get_measurement_count | Get the count of measurement register. | | The count of measurement registers |
-| get_measurement | Get measurement register according to given selected index and algorithms. | imr_select ([int, int]): The first is index of measurement register, the second is the algorithms ID | The count of measurement registers |
-| get_quote | Get the quote for given nonce and data. | | The `Quote` object |
-| get_eventlog | Get eventlog for given index and count. | | `TcgEventLog` object |
+| get_default_algorithms | Get the default Digest algorithms supported by trusted foundation. | | A `TcgAlgorithmRegistry` object telling the default algorithms |
+| get_measurement_count | Get the count of measurement register. | | An integer telling the count of measurement registers |
+| get_measurement | Get measurement register according to given selected index and algorithms. | imr_select ([int, int]): The first is index of measurement register, the second is the algorithms ID | An integer telling the count of measurement registers |
+| get_quote | Get the quote for given nonce and data. | nonce: a number used to protect private communications by preventing replay attacks<br> data: the data specified by user<br> extraArgs: the placeholder for extra arguments required in vTPM or other TEE cases  | A `Quote` object |
+| get_eventlog | Get eventlog for given index and count. | start: the index of the event log to start fetching<br> count: the number of event logs to fetch | A `TcgEventLog` object |
 
 ## 4. SDKs
 
 It provides different SDKs for producing the confidential primitives in different deployment environments.
-Choose correct SDK according to your environment.
+Choose correct SDK according to your environment. Installation guide can be found at the readme of each implementation.
 
-| SDK | Deployment Scenarios |
-| --- | --------------- |
-| Firmware SDK | Firmware Application |
-| [VM SDK](https://github.com/cc-api/cc-trusted-api/tree/main/vmsdk) | Confidential Virtual Machine |
-| [Confidential Cloud Native Primitives (CCNP)](https://github.com/intel/confidential-cloud-native-primitives) | Confidential Cluster/Container |
+| SDK | Deployment Scenarios | Installation Guide |
+| --- | --------------- | -- |
+| Firmware SDK | Firmware Application | |
+| [VM SDK](https://github.com/cc-api/cc-trusted-api/tree/main/vmsdk) | Confidential Virtual Machine | [Guide](vmsdk/README.md) |
+| [Confidential Cloud Native Primitives (CCNP)](https://github.com/intel/confidential-cloud-native-primitives) | Confidential Cluster/Container | [Guide](https://github.com/intel/confidential-cloud-native-primitives/blob/main/deployment/README.md) |
 
 ## 5. How to use the APIs
 
-Below example code collects measurement register count of the platform using API `get_measurement_count` using `VMSDK` in python. You can find more examples at [API usage example](docs/API-usage-example.md).
+This section contains the brief samples of APIs. You can find more examples at [API usage example](docs/API-usage-example.md).
+
+### 5.1 Sample of `get_measurement` API
+
+Below example code collects measurements from all integrity registers of the platform using API `get_measurement_count`, `get_default_algorithms` and `get_measurement` using `VMSDK` in python. 
 
 ```
 from cctrusted import CCTrustedVmSdk
@@ -89,7 +93,7 @@ for index in range(CCTrustedVmSdk.inst().get_measurement_count()):
     LOG.info("HASH: %s", hash_str)
 ```
 
-Run [cc_imr_cli.py](vmsdk/python/cc_imr_cli.py).
+Run [cc_imr_cli.py](vmsdk/python/cc_imr_cli.py) to execute the sample.
 
 ```
 $ sudo su
@@ -98,7 +102,7 @@ $ sudo su
 # python3 cc_imr_cli.py
 ```
 
-Below is the example output on Intel® TDX via VM SDK:
+Below is the example output for `get_measurement` API on Intel® TDX via VM SDK:
 ```
 cctrusted.cvm DEBUG    Successful open device node /dev/tdx_guest
 cctrusted.cvm DEBUG    Successful read TDREPORT from /dev/tdx_guest.
@@ -129,6 +133,94 @@ __main__ INFO     Algorithms: TPM_ALG_SHA384
 __main__ INFO     HASH: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
 
 ```
+
+### 5.2 Sample of `get_quote` API
+
+Below example code collect the Quote on the platform using `get_quote` API using `VMSDK` implemented by python.
+
+```
+from cctrusted import CCTrustedVmSdk
+
+# Specify the `nonce`, `data` and `extraArgs` as None in the example
+quote = CCTrustedVmSdk.inst().get_quote(None, None, None)
+if quote is not None:
+    # Dump Quote object as raw data
+    quote.dump(is_raw=True)
+```
+
+Run [cc_quote_cli.py](vmsdk/python/cc_quote_cli.py) to execute the sample.
+
+```
+$ sudo su
+# source setupenv.sh
+# cd vmsdk/python
+# python3 cc_quote_cli.py
+```
+
+Below is the example output for `get_quote` API on Intel® TDX via VM SDK:
+
+```
+root@tdx-guest:/home/tdx/cc-trusted-api/vmsdk/python# python3 ./cc_quote_cli.py
+cctrusted.cvm DEBUG    Successful open device node /dev/tdx_guest
+cctrusted.cvm DEBUG    Successful read TDREPORT from /dev/tdx_guest.
+cctrusted.cvm DEBUG    Successful parse TDREPORT.
+cctrusted.cvm INFO     Using report data directly to generate quote
+cctrusted.cvm DEBUG    Successful open device node /dev/tdx_guest
+cctrusted.cvm DEBUG    Successful get Quote from /dev/tdx_guest.
+cctrusted_base.tdx.quote INFO     ======================================
+cctrusted_base.tdx.quote INFO     TD Quote
+cctrusted_base.tdx.quote INFO     ======================================
+cctrusted_base.tdx.quote INFO     TD Quote Header:
+cctrusted_base.binaryblob INFO     00000000  04 00 02 00 81 00 00 00 00 00 00 00 93 9A 72 33  ..............r3
+cctrusted_base.binaryblob INFO     00000010  F7 9C 4C A9 94 0A 0D B3 95 7F 06 07 C6 0E 85 25  ..L............%
+cctrusted_base.binaryblob INFO     00000020  C8 09 3C 0E A0 64 EF F1 29 6B 85 83 00 00 00 00  ..<..d..)k......
+cctrusted_base.tdx.quote INFO     TD Quote Body:
+cctrusted_base.binaryblob INFO     00000000  04 01 01 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+cctrusted_base.binaryblob INFO     00000010  97 90 D8 9A 10 21 0E C6 96 8A 77 3C EE 2C A0 5B  .....!....w<.,.[
+cctrusted_base.binaryblob INFO     00000020  5A A9 73 09 F3 67 27 A9 68 52 7B E4 60 6F C1 9E  Z.s..g'.hR{.`o..
+...
+cctrusted_base.binaryblob INFO     00000230  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+cctrusted_base.binaryblob INFO     00000240  00 00 00 00 00 00 00 00                          ........
+cctrusted_base.tdx.quote INFO     TD Quote Signature:
+cctrusted_base.binaryblob INFO     00000000  16 1F E4 F6 8C 05 D4 8F E2 EB EB C8 32 1A CE 6C  ............2..l
+cctrusted_base.binaryblob INFO     00000010  90 2A B5 EA 74 F5 4C 4D A2 6A 30 AC 5C A5 13 84  .*..t.LM.j0.\...
+cctrusted_base.binaryblob INFO     00000020  3D CB A2 31 20 43 8C 38 63 3D EE D1 7F B4 9F B5  =..1 C.8c=......
+...
+cctrusted_base.binaryblob INFO     000010D0  44 20 43 45 52 54 49 46 49 43 41 54 45 2D 2D 2D  D CERTIFICATE---
+cctrusted_base.binaryblob INFO     000010E0  2D 2D 0A 00                                      --..
+```
+
+### 5.3 Sample of `get_eventlog` API
+
+Below example code collects all boot time event logs on the platform using API `get_eventlog` implemented in `VMSDK` in python. Sample Event logs collected within container using `CCNP` API can be found [here](https://github.com/intel/confidential-cloud-native-primitives/blob/main/docs/sample-output-for-node-measurement-tool-full.txt).
+
+```
+from cctrusted import CCTrustedVmSdk
+
+# Specify the index of event log to start fetching(optional argument, default as 0)
+start = 0
+# Specify the number of event logs to be fetched.(optional argument, default as total number of event logs available)
+count = 5
+
+event_logs = CCTrustedVmSdk.inst().get_eventlog(start, count)
+    if event_logs is not None:
+        LOG.info("Total %d of event logs fetched.", len(event_logs.event_logs))
+        # Dump event as formatted
+        event_logs.dump(is_raw=false)
+```
+
+Run [cc_event_log_cli.py](vmsdk/python/cc_event_log_cli.py) to execute the sample.
+
+```
+$ sudo su
+# source setupenv.sh
+# cd vmsdk/python
+# python3 cc_event_log_cli.py [-s <start_index_of_event_log>] [-c <count_of_event_logs>] [--out-format-raw <true/false>]
+```
+
+Below is the description of the output of `get_eventlog` API on Intel® TDX via VM SDK. Full event logs can be found in [API usage example](docs/API-usage-example.md). 
+
+<img src="docs/vmsdk-event-log-desc-screenshot.png" alt="vmsdk event log output description" width="1100">
 
 ## 6. Contributors
 
