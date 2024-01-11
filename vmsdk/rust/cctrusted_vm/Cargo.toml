@@ -1,0 +1,16 @@
+[package]
+name = "cctrusted_vm"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+
+[lib]
+name = "cctrusted_vm"
+path = "src/lib.rs"
+
+[dependencies]
+cctrusted_base = { path = "../../../common/rust/cctrusted_base" }
+anyhow = "1.0"
+log = "0.4.20"
+nix = "0.26.2"
+base64 = "0.13.0"
