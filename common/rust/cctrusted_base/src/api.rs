@@ -115,7 +115,7 @@ impl ParseCcReport<TdxQuote> for CcReport {
                 let report: &TdxQuote = mem::transmute(&tdx_quote);
                 Ok(report.clone())
             },
-            Err(e) => return Err(anyhow!("[parse_cc_report] error parse tdx quote: {:?}", e)),
+            Err(e) => Err(anyhow!("[parse_cc_report] error parse tdx quote: {:?}", e)),
         }
     }
 }

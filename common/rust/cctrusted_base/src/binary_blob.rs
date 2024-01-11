@@ -22,9 +22,9 @@ pub fn dump_data(data: &Vec<u8>) {
         '~', '"', '!',
     ];
 
-    while usize::from(index) < data.len() {
+    while index < data.len() {
         if index % 16 == 0 {
-            if printstr.len() != 0 {
+            if !printstr.is_empty() {
                 info!("{} {}", linestr, printstr);
                 printstr = "".to_string();
             }
@@ -35,13 +35,13 @@ pub fn dump_data(data: &Vec<u8>) {
         linestr.push_str(format!("{:02X} ", v).as_str());
         match printable.iter().position(|&c| c == (v as char)) {
             Some(_) => {
-                if v < 0x9 || v > 0xD {
+                if !(0x9..=0xD).contains(&v) {
                     printstr.push_str(core::str::from_utf8(&[v]).unwrap());
                 } else {
-                    printstr.push_str(".");
+                    printstr.push('.');
                 }
             }
-            None => printstr.push_str("."),
+            None => printstr.push('.'),
         }
 
         index += 1;
@@ -53,7 +53,7 @@ pub fn dump_data(data: &Vec<u8>) {
             blank.push_str("   ");
         }
         info!("{}{} {}", linestr, blank, printstr);
-    } else if usize::from(index) == data.len() {
+    } else if index == data.len() {
         info!("{} {}", linestr, printstr);
     }
 }

@@ -76,7 +76,7 @@ pub fn build_cvm() -> Result<Box<dyn BuildCVM>, anyhow::Error> {
         TeeType::SEV => todo!(),
         TeeType::CCA => todo!(),
         TeeType::TPM => todo!(),
-        TeeType::PLAIN => return Err(anyhow!("[build_cvm] Error: not in any TEE!")),
+        TeeType::PLAIN => Err(anyhow!("[build_cvm] Error: not in any TEE!")),
     }
 }
 

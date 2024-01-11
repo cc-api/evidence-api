@@ -1,0 +1,53 @@
+name: Rust Code Scan
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'common/rust/cctrusted_base/src/**.rs'
+      - 'common/rust/cctrusted_base/src/tdx/**.rs'
+      - 'common/rust/cctrusted_base/src/tpm/**.rs'
+      - 'vmsdk/rust/cctrusted_vm/src/**.rs'
+      - 'vmsdk/rust/sample/src/**.rs'      
+      - '.github/workflows/pr-check-rust.yaml'
+  pull_request:
+    paths:
+      - 'common/rust/cctrusted_base/src/**.rs'
+      - 'common/rust/cctrusted_base/src/tdx/**.rs'
+      - 'common/rust/cctrusted_base/src/tpm/**.rs'
+      - 'vmsdk/rust/cctrusted_vm/src/**.rs'
+      - 'vmsdk/rust/sample/src/**.rs'      
+      - '.github/workflows/pr-check-rust.yaml'
+  workflow_dispatch:
+
+jobs:
+  codescan:
+    runs-on: tdx-runner
+    steps:
+      - name: Checkout PR
+        uses: actions/checkout@v3
+      
+      - name: Set up Rust action
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: 1.70.0
+
+      - name: Install dependencies
+        run: |
+          sudo apt update && yes | DEBIAN_FRONTEND=noninteractive sudo apt install -y libcryptsetup-dev clang protobuf-compiler protobuf-c-compiler libprotobuf-c-dev libprotobuf-c1 build-essential pkg-config libssl-dev
+      - name: Run cargo check
+        run: |
+          cd common/rust/cctrusted_base/src
+          cargo test
+          cargo check
+          cargo fmt -- --check
+          cargo clippy
+          cargo install --locked cargo-deny
+          cargo deny check
+          cd vmsdk/rust/cctrusted_vm/src/
+          cargo test
+          cargo check
+          cargo fmt -- --check
+          cargo clippy
+          cargo deny check

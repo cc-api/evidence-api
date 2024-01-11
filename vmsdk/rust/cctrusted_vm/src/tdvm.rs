@@ -104,7 +104,7 @@ impl TdxVM {
 
                 //build the request
                 let request = tdx_1_0_report_req {
-                    subtype: 0 as u8,
+                    subtype: 0_u8,
                     reportdata: ptr::addr_of!(report_data_array) as u64,
                     rpd_len: REPORT_DATA_LEN,
                     tdreport: ptr::addr_of!(td_report) as u64,
@@ -213,8 +213,8 @@ impl CVM for TdxVM {
             status: 0,
             in_len: (mem::size_of_val(&qgs_msg) + 4) as u32,
             out_len: 0,
-            data_len_be_bytes: (1048 as u32).to_be_bytes(),
-            data: [0; TDX_QUOTE_LEN as usize],
+            data_len_be_bytes: (1048_u32).to_be_bytes(),
+            data: [0; TDX_QUOTE_LEN],
         };
 
         let qgs_msg_bytes = unsafe {
@@ -321,13 +321,13 @@ impl CVM for TdxVM {
     }
 
     // CVM trait function: retrieve TDX CCEL and IMA eventlog
-    fn process_cc_eventlog(&self) -> () {
+    fn process_cc_eventlog(&self) {
         todo!()
     }
 
     // CVM trait function: retrive CVM type
     fn get_cc_type(&self) -> CcType {
-        return self.cc_type.clone();
+        self.cc_type.clone()
     }
 
     // CVM trait function: dump CVM basic information

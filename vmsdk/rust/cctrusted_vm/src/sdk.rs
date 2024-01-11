@@ -33,7 +33,7 @@ impl CCTrustedApi for API {
                     cc_type: cvm.get_cc_type().tee_type,
                 })
             }
-            Err(e) => return Err(anyhow!("[get_cc_report] error create cvm: {:?}", e)),
+            Err(e) => Err(anyhow!("[get_cc_report] error create cvm: {:?}", e)),
         }
     }
 
@@ -59,16 +59,14 @@ impl CCTrustedApi for API {
                 // call CVM trait defined methods
                 let algo_id = cvm.get_algorithm_id();
                 Ok(Algorithm {
-                    algo_id: algo_id,
+                    algo_id,
                     algo_id_str: ALGO_NAME_MAP.get(&algo_id).unwrap().to_owned(),
                 })
             }
-            Err(e) => {
-                return Err(anyhow!(
-                    "[get_default_algorithm] error get algorithm: {:?}",
-                    e
-                ))
-            }
+            Err(e) => Err(anyhow!(
+                "[get_default_algorithm] error get algorithm: {:?}",
+                e
+            )),
         }
     }
 }

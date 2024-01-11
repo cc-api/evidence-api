@@ -9,7 +9,7 @@ pub struct TdxRTMR {
 
 impl TcgIMR for TdxRTMR {
     fn max_index(&self) -> u8 {
-        return 3;
+        3
     }
 
     fn get_index(&self) -> u8 {
