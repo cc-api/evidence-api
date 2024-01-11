@@ -37,7 +37,7 @@ jobs:
         run: |
           sudo apt update && yes | DEBIAN_FRONTEND=noninteractive sudo apt install -y libcryptsetup-dev clang protobuf-compiler protobuf-c-compiler libprotobuf-c-dev libprotobuf-c1 build-essential pkg-config libssl-dev
 
-      - name: Run cargo check
+      - name: Run cargo check for cctrusted_base
         run: |
           cd common/rust/cctrusted_base/
           cargo check
@@ -45,6 +45,9 @@ jobs:
           cargo clippy
           cargo install --locked cargo-deny
           cargo deny check
+
+      - name: Run cargo check for VM SDK
+        run: |
           cd vmsdk/rust/cctrusted_vm/
           cargo check
           cargo fmt -- --check
