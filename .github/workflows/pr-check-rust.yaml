@@ -28,11 +28,6 @@ jobs:
       - name: Checkout PR
         uses: actions/checkout@v3
       
-      - name: Set up Rust action
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: nightly
-
       - name: Install dependencies
         run: |
           sudo apt update && yes | DEBIAN_FRONTEND=noninteractive sudo apt install -y libcryptsetup-dev clang protobuf-compiler protobuf-c-compiler libprotobuf-c-dev libprotobuf-c1 build-essential pkg-config libssl-dev
