@@ -43,7 +43,7 @@ pub struct TdxVM {
 // implement the structure method and associated function
 impl TdxVM {
     // TdxVM struct associated function: to build a TdxVM sturcture instance
-    pub fn new() -> TdxVM {
+    fn new() -> TdxVM {
         let cc_type = CcType {
             tee_type: TeeType::TDX,
             tee_type_str: TEE_NAME_MAP.get(&TeeType::TDX).unwrap().to_owned(),

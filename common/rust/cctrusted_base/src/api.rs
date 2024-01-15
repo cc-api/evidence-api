@@ -25,7 +25,7 @@ pub trait CCTrustedApi {
     fn get_cc_report(
         nonce: Option<String>,
         data: Option<String>,
-        _extra_args: ExtraArgs,
+        extra_args: ExtraArgs,
     ) -> Result<CcReport, anyhow::Error>;
 
     /***
@@ -110,5 +110,5 @@ pub trait CCTrustedApi {
         fn parse_cc_report(report: Vec<u8>) -> Result<TdxQuote, anyhow::Error>;
 */
 pub trait ParseCcReport<T> {
-    fn parse_cc_report(_report: Vec<u8>) -> Result<T, anyhow::Error>;
+    fn parse_cc_report(report: Vec<u8>) -> Result<T, anyhow::Error>;
 }
