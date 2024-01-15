@@ -1,10 +1,13 @@
 #![allow(non_camel_case_types)]
 use anyhow::anyhow;
+use core::mem;
 use core::mem::transmute;
 use core::result::Result;
 use core::result::Result::Ok;
 use log::*;
 
+use crate::api::ParseCcReport;
+use crate::api_data::CcReport;
 use crate::tdx::common::*;
 
 #[repr(C)]
@@ -561,6 +564,19 @@ impl TdxQuote {
                 "[parse_tdx_quote] unknown quote header version: {:}",
                 tdx_quote_header.version
             ));
+        }
+    }
+}
+
+// API function parses raw cc report to TdxQuote struct
+impl ParseCcReport<TdxQuote> for CcReport {
+    fn parse_cc_report(report: Vec<u8>) -> Result<TdxQuote, anyhow::Error> {
+        match TdxQuote::parse_tdx_quote(report) {
+            Ok(tdx_quote) => unsafe {
+                let report: &TdxQuote = mem::transmute(&tdx_quote);
+                Ok(report.clone())
+            },
+            Err(e) => Err(anyhow!("[parse_cc_report] error parse tdx quote: {:?}", e)),
         }
     }
 }
