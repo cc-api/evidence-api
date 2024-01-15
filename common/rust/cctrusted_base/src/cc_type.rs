@@ -1,7 +1,7 @@
 use hashbrown::HashMap;
 
 // supported TEE types
-#[derive(Clone, Eq, Hash, PartialEq)]
+#[derive(Clone, Eq, Hash, PartialEq, Debug)]
 pub enum TeeType {
     PLAIN = -1,
     TPM = 0,

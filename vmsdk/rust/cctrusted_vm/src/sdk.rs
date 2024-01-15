@@ -15,8 +15,8 @@ pub struct API {}
 impl CCTrustedApi for API {
     // CCTrustedApi trait function: get report of a CVM
     fn get_cc_report(
-        nonce: String,
-        data: String,
+        nonce: Option<String>,
+        data: Option<String>,
         _extra_args: ExtraArgs,
     ) -> Result<CcReport, anyhow::Error> {
         match build_cvm() {
@@ -42,9 +42,20 @@ impl CCTrustedApi for API {
         dump_data(report)
     }
 
+    // CCTrustedApi trait function: get max number of CVM IMRs
+    fn get_measurement_count() -> Result<u8, anyhow::Error> {
+        match build_cvm() {
+            Ok(cvm) => Ok(cvm.get_max_index() + 1),
+            Err(e) => Err(anyhow!("[get_measurement_count] error create cvm: {:?}", e)),
+        }
+    }
+
     // CCTrustedApi trait function: get measurements of a CVM
-    fn get_cc_measurement(_index: u8, _algo_id: u8) -> TcgDigest {
-        todo!()
+    fn get_cc_measurement(index: u8, algo_id: u8) -> Result<TcgDigest, anyhow::Error> {
+        match build_cvm() {
+            Ok(cvm) => cvm.process_cc_measurement(index, algo_id),
+            Err(e) => Err(anyhow!("[get_cc_measurement] error create cvm: {:?}", e)),
+        }
     }
 
     // CCTrustedApi trait function: get eventlogs of a CVM
@@ -67,6 +78,293 @@ impl CCTrustedApi for API {
                 "[get_default_algorithm] error get algorithm: {:?}",
                 e
             )),
+        }
+    }
+}
+
+#[cfg(test)]
+mod sdk_api_tests {
+    use super::*;
+    use crate::cvm::get_cvm_type;
+    use cctrusted_base::cc_type::TeeType;
+    use cctrusted_base::tcg::{TPM_ALG_SHA256, TPM_ALG_SHA384};
+    use cctrusted_base::tdx::common::{Tdx,IntelTeeType,QE_VENDOR_INTEL_SGX,AttestationKeyType,QeCertDataType};
+    use cctrusted_base::tdx::quote::TdxQuote;
+    use rand::Rng;
+
+    // test on cc trusted API [get_cc_report]
+    #[test]
+    fn test_get_cc_report() {
+        let nonce = base64::encode(rand::thread_rng().gen::<[u8; 32]>());
+        let data = base64::encode(rand::thread_rng().gen::<[u8; 32]>());
+
+        match Tdx::generate_tdx_report_data(Some(nonce.clone()), Some(data.clone())) {
+            Ok(r) => r,
+            Err(e) => {
+                assert_eq!(true, format!("{:?}", e).is_empty());
+                return;
+            }
+        };
+
+        let report = match API::get_cc_report(Some(nonce.clone()), Some(data.clone()), ExtraArgs {})
+        {
+            Ok(q) => q,
+            Err(e) => {
+                assert_eq!(true, format!("{:?}", e).is_empty());
+                return;
+            }
+        };
+
+        assert_ne!(report.cc_report.len(), 0);
+
+        let expected_cvm_type = get_cvm_type().tee_type;
+        assert_eq!(report.cc_type, expected_cvm_type);
+    }
+
+    #[test]
+    fn test_get_cc_report_without_data() {
+        let nonce = base64::encode(rand::thread_rng().gen::<[u8; 32]>());
+
+        let expected_report_data = match Tdx::generate_tdx_report_data(Some(nonce.clone()), None) {
+            Ok(r) => r,
+            Err(e) => {
+                assert_eq!(true, format!("{:?}", e).is_empty());
+                return;
+            }
+        };
+
+        let report = match API::get_cc_report(Some(nonce.clone()), None, ExtraArgs {}) {
+            Ok(q) => q,
+            Err(e) => {
+                assert_eq!(true, format!("{:?}", e).is_empty());
+                return;
+            }
+        };
+
+        if report.cc_type == TeeType::TDX {
+            let tdx_quote: TdxQuote = match CcReport::parse_cc_report(report.cc_report) {
+                Ok(q) => q,
+                Err(e) => {
+                    assert_eq!(true, format!("{:?}", e).is_empty());
+                    return;
+                }
+            };
+
+            assert_eq!(
+                base64::encode(&tdx_quote.body.report_data),
+                expected_report_data
+            );
+        }
+    }
+
+    #[test]
+    fn test_get_cc_report_without_nonce_and_data() {
+        let expected_report_data = match Tdx::generate_tdx_report_data(None, None) {
+            Ok(r) => r,
+            Err(e) => {
+                assert_eq!(true, format!("{:?}", e).is_empty());
+                return;
+            }
+        };
+
+        let report = match API::get_cc_report(None, None, ExtraArgs {}) {
+            Ok(q) => q,
+            Err(e) => {
+                assert_eq!(true, format!("{:?}", e).is_empty());
+                return;
+            }
+        };
+
+        if report.cc_type == TeeType::TDX {
+            let tdx_quote: TdxQuote = match CcReport::parse_cc_report(report.cc_report) {
+                Ok(q) => q,
+                Err(e) => {
+                    assert_eq!(true, format!("{:?}", e).is_empty());
+                    return;
+                }
+            };
+
+            assert_eq!(
+                base64::encode(&tdx_quote.body.report_data),
+                expected_report_data
+            );
+        }
+    }
+
+    #[test]
+    fn test_get_cc_report_nonce_not_base64_encoded() {
+        let nonce = "XD^%*!x".to_string();
+        match API::get_cc_report(Some(nonce), None, ExtraArgs {}) {
+            Ok(q) => q,
+            Err(e) => {
+                assert_eq!(
+                    true,
+                    format!("{:?}", e).contains("nonce is not base64 encoded")
+                );
+                return;
+            }
+        };
+    }
+
+    #[test]
+    fn test_get_cc_report_data_not_base64_encoded() {
+        let data = "XD^%*!x".to_string();
+        match API::get_cc_report(None, Some(data), ExtraArgs {}) {
+            Ok(q) => q,
+            Err(e) => {
+                assert_eq!(
+                    true,
+                    format!("{:?}", e).contains("data is not base64 encoded")
+                );
+                return;
+            }
+        };
+    }
+
+    // test on cc trusted API [get_default_algorithm]
+    #[test]
+    fn test_get_default_algorithm() {
+        let defalt_algo = match API::get_default_algorithm() {
+            Ok(algorithm) => algorithm,
+            Err(e) => {
+                assert_eq!(true, format!("{:?}", e).is_empty());
+                return;
+            }
+        };
+
+        if get_cvm_type().tee_type == TeeType::TDX {
+            assert_eq!(defalt_algo.algo_id, TPM_ALG_SHA384);
+        }
+    }
+
+    // test on cc trusted API [get_measurement_count]
+    #[test]
+    fn test_get_measurement_count() {
+        let count = match API::get_measurement_count() {
+            Ok(count) => count,
+            Err(e) => {
+                assert_eq!(true, format!("{:?}", e).is_empty());
+                return;
+            }
+        };
+
+        if get_cvm_type().tee_type == TeeType::TDX {
+            assert_eq!(count, 4);
+        }
+    }
+
+    // test on cc trusted API [get_cc_measurement]
+    #[test]
+    fn test_get_cc_measurement() {
+        let count = match API::get_measurement_count() {
+            Ok(count) => count,
+            Err(e) => {
+                assert_eq!(true, format!("{:?}", e).is_empty());
+                return;
+            }
+        };
+
+        if get_cvm_type().tee_type == TeeType::TDX {
+            for index in 0..count {
+                let tcg_digest = match API::get_cc_measurement(index, TPM_ALG_SHA384) {
+                    Ok(tcg_digest) => tcg_digest,
+                    Err(e) => {
+                        assert_eq!(true, format!("{:?}", e).is_empty());
+                        return;
+                    }
+                };
+
+                assert_eq!(tcg_digest.algo_id, TPM_ALG_SHA384);
+                assert_eq!(tcg_digest.hash.len(), 48);
+            }
+        }
+    }
+
+    #[test]
+    fn test_get_cc_measurement_with_wrong_algo_id() {
+        let count = match API::get_measurement_count() {
+            Ok(count) => count,
+            Err(e) => {
+                assert_eq!(true, format!("{:?}", e).is_empty());
+                return;
+            }
+        };
+
+        if get_cvm_type().tee_type == TeeType::TDX {
+            for index in 0..count {
+                match API::get_cc_measurement(index, TPM_ALG_SHA256) {
+                    Ok(tcg_digest) => tcg_digest,
+                    Err(e) => {
+                        assert_eq!(true, format!("{:?}", e).contains("invalid algo id"));
+                        return;
+                    }
+                };
+            }
+        }
+    }
+
+    // test on cc trusted API [parse_cc_report]
+    #[test]
+    fn test_parse_cc_report() {
+        let nonce = base64::encode(rand::thread_rng().gen::<[u8; 32]>());
+        let data = base64::encode(rand::thread_rng().gen::<[u8; 32]>());
+
+        let expected_report_data =
+            match Tdx::generate_tdx_report_data(Some(nonce.clone()), Some(data.clone())) {
+                Ok(r) => r,
+                Err(e) => {
+                    assert_eq!(true, format!("{:?}", e).is_empty());
+                    return;
+                }
+            };
+
+        let report = match API::get_cc_report(Some(nonce.clone()), Some(data.clone()), ExtraArgs {})
+        {
+            Ok(q) => q,
+            Err(e) => {
+                assert_eq!(true, format!("{:?}", e).is_empty());
+                return;
+            }
+        };
+
+        if report.cc_type == TeeType::TDX {
+            let tdx_quote: TdxQuote = match CcReport::parse_cc_report(report.cc_report) {
+                Ok(q) => q,
+                Err(e) => {
+                    assert_eq!(true, format!("{:?}", e).is_empty());
+                    return;
+                }
+            };
+
+            assert_eq!(tdx_quote.header.version, 4);
+            assert_eq!(tdx_quote.header.tee_type, IntelTeeType::TEE_TDX);
+            assert_eq!(tdx_quote.header.qe_vendor, QE_VENDOR_INTEL_SGX);
+            assert_eq!(
+                base64::encode(&tdx_quote.body.report_data),
+                expected_report_data
+            );
+
+            if tdx_quote.header.ak_type == AttestationKeyType::ECDSA_P256 {
+                match tdx_quote.tdx_quote_ecdsa256_sigature {
+                    Some(tdx_quote_ecdsa256_sigature) => {
+                        if tdx_quote_ecdsa256_sigature.qe_cert.cert_type == QeCertDataType::QE_REPORT_CERT {
+                            match tdx_quote_ecdsa256_sigature.qe_cert.cert_data_struct{
+                                Some(_) => (),
+                                None => assert!(false, "cert_data_struct is None"),
+                            }
+                        }
+                    },
+                    None => assert!(false, "tdx_quote_ecdsa256_sigature is None"),
+                }
+            } else if tdx_quote.header.ak_type == AttestationKeyType::ECDSA_P384 {
+                match tdx_quote.tdx_quote_signature {
+                    Some(_) => (),
+                    None => assert!(false, "tdx_quote_signature is None"),
+                }
+            } else {
+                assert!(false, "unknown ak type");
+            }
+               
         }
     }
 }
