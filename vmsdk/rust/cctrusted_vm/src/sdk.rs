@@ -88,7 +88,9 @@ mod sdk_api_tests {
     use crate::cvm::get_cvm_type;
     use cctrusted_base::cc_type::TeeType;
     use cctrusted_base::tcg::{TPM_ALG_SHA256, TPM_ALG_SHA384};
-    use cctrusted_base::tdx::common::{Tdx,IntelTeeType,QE_VENDOR_INTEL_SGX,AttestationKeyType,QeCertDataType};
+    use cctrusted_base::tdx::common::{
+        AttestationKeyType, IntelTeeType, QeCertDataType, Tdx, QE_VENDOR_INTEL_SGX,
+    };
     use cctrusted_base::tdx::quote::TdxQuote;
     use rand::Rng;
 
@@ -347,13 +349,15 @@ mod sdk_api_tests {
             if tdx_quote.header.ak_type == AttestationKeyType::ECDSA_P256 {
                 match tdx_quote.tdx_quote_ecdsa256_sigature {
                     Some(tdx_quote_ecdsa256_sigature) => {
-                        if tdx_quote_ecdsa256_sigature.qe_cert.cert_type == QeCertDataType::QE_REPORT_CERT {
-                            match tdx_quote_ecdsa256_sigature.qe_cert.cert_data_struct{
+                        if tdx_quote_ecdsa256_sigature.qe_cert.cert_type
+                            == QeCertDataType::QE_REPORT_CERT
+                        {
+                            match tdx_quote_ecdsa256_sigature.qe_cert.cert_data_struct {
                                 Some(_) => (),
                                 None => assert!(false, "cert_data_struct is None"),
                             }
                         }
-                    },
+                    }
                     None => assert!(false, "tdx_quote_ecdsa256_sigature is None"),
                 }
             } else if tdx_quote.header.ak_type == AttestationKeyType::ECDSA_P384 {
@@ -364,7 +368,6 @@ mod sdk_api_tests {
             } else {
                 assert!(false, "unknown ak type");
             }
-               
         }
     }
 }
