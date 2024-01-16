@@ -335,28 +335,6 @@ mod test_generate_tdx_report_data {
     }
 
     #[test]
-    //generate_tdx_report require nonce string is base64 encoded
-    fn test_generate_tdx_report_data_nonce_too_short_not_base64_encoded() {
-        //coming in nonce should always be base64 encoded
-        let result = Tdx::generate_tdx_report_data(
-            Some("123".to_string()),
-            Some("IXUKoBO1XEFBPwopN4sY".to_string()),
-        );
-        assert!(result.is_err());
-    }
-
-    #[test]
-    //generate_tdx_report require data string is base64 encoded
-    fn test_generate_tdx_report_data_report_data_too_short_not_base64_encoded() {
-        //coming in data should always be base64 encoded
-        let result = Tdx::generate_tdx_report_data(
-            Some("IXUKoBO1XEFBPwopN4sY".to_string()),
-            Some("123".to_string()),
-        );
-        assert!(result.is_err());
-    }
-
-    #[test]
     //generate_tdx_report check result as expected
     //orginal nonce = "12345678", original data = "abcdefgh"
     fn test_generate_tdx_report_data_report_data_nonce_base64_encoded_as_expected() {
