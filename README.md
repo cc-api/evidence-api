@@ -1821,17 +1821,17 @@ cctrusted_base.binaryblob INFO     00000020  20 53 75 63 63 65 73 73            
         </a>
     </td>
     <td align="center">
-        <a href="https://github.com/Ruoyu-y">
-            <img src="https://avatars.githubusercontent.com/u/70305231?v=4" width="100;" alt="Ruoyu-y"/>
-            <br />
-            <sub><b>Ying Ruoyu</b></sub>
-        </a>
-    </td>
-    <td align="center">
         <a href="https://github.com/intelzhongjie">
             <img src="https://avatars.githubusercontent.com/u/56340883?v=4" width="100;" alt="intelzhongjie"/>
             <br />
             <sub><b>Shi Zhongjie</b></sub>
+        </a>
+    </td>
+    <td align="center">
+        <a href="https://github.com/Ruoyu-y">
+            <img src="https://avatars.githubusercontent.com/u/70305231?v=4" width="100;" alt="Ruoyu-y"/>
+            <br />
+            <sub><b>Ying Ruoyu</b></sub>
         </a>
     </td>
     <td align="center">
