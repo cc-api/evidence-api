@@ -1,6 +1,6 @@
 [project]
 name = "cctrusted_vm"
-version = "0.0.3"
+version = "0.3.1"
 authors = [
   { name="Lu, Ken", email="ken.lu@intel.com" },
   { name="Zhang, Wenhui", email="wenhui.zhang@bytedance.com" },
@@ -15,6 +15,8 @@ classifiers = [
     "Operating System :: POSIX :: Linux",
 ]
 dependencies = [
+  "cctrusted_base",
+  "pytest",
 ]
 
 [project.urls]
