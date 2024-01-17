@@ -1,4 +1,5 @@
 use hashbrown::HashMap;
+use log::info;
 
 pub const TPM_ALG_ERROR: u8 = 0x0;
 pub const TPM_ALG_RSA: u8 = 0x1;
@@ -26,19 +27,46 @@ lazy_static! {
 // this trait retrieve tcg standard algorithm name in string
 pub trait TcgAlgorithmRegistry {
     fn get_algorithm_id(&self) -> u8;
+    fn get_algorithm_id_str(&self) -> String;
 }
 
 // digest format: (algo id, hash value)
-#[allow(dead_code)]
+#[derive(Clone)]
 pub struct TcgDigest {
-    algo_id: u8,
-    hash: Vec<u8>,
+    pub algo_id: u8,
+    pub hash: Vec<u8>,
 }
 
-// this trait retrieve IMR's max index of a CVM and hash value
+impl TcgDigest {
+    pub fn show(&self) {
+        info!("show data in struct TcgDigest");
+        info!(
+            "algo = {}",
+            ALGO_NAME_MAP.get(&self.algo_id).unwrap().to_owned()
+        );
+        info!("hash = {:02X?}", self.hash);
+    }
+
+    pub fn get_hash(&self) -> Vec<u8> {
+        self.hash.clone()
+    }
+}
+
+impl TcgAlgorithmRegistry for TcgDigest {
+    fn get_algorithm_id(&self) -> u8 {
+        self.algo_id
+    }
+
+    fn get_algorithm_id_str(&self) -> String {
+        ALGO_NAME_MAP.get(&self.algo_id).unwrap().to_owned()
+    }
+}
+
+// traits a Tcg IMR should have
 pub trait TcgIMR {
-    fn max_index(&self) -> u8;
+    fn max_index() -> u8;
     fn get_index(&self) -> u8;
-    fn get_hash(&self) -> Vec<&str>;
-    fn is_valid(&self) -> bool;
+    fn get_tcg_digest(&self, algo_id: u8) -> TcgDigest;
+    fn is_valid_index(index: u8) -> Result<bool, anyhow::Error>;
+    fn is_valid_algo(algo_id: u8) -> Result<bool, anyhow::Error>;
 }

@@ -16,7 +16,22 @@ pub trait CVM {
         Returns:
             the cc report byte array or error information
     */
-    fn process_cc_report(&mut self, nonce: String, data: String) -> Result<Vec<u8>, anyhow::Error>;
+    fn process_cc_report(
+        &mut self,
+        nonce: Option<String>,
+        data: Option<String>,
+    ) -> Result<Vec<u8>, anyhow::Error>;
+
+    /***
+        retrive CVM max number of measurement registers
+
+        Args:
+            None
+
+        Returns:
+            max index of register of CVM
+    */
+    fn get_max_index(&self) -> u8;
 
     /***
         retrive CVM measurement registers, e.g.: RTMRs, vTPM PCRs, etc.
@@ -28,7 +43,7 @@ pub trait CVM {
         Returns:
             TcgDigest struct
     */
-    fn process_cc_measurement(&self, _index: u8, _algo_id: u8) -> TcgDigest;
+    fn process_cc_measurement(&self, index: u8, algo_id: u8) -> Result<TcgDigest, anyhow::Error>;
 
     /***
         retrive CVM eventlogs
