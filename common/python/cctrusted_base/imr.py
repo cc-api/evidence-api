@@ -3,7 +3,7 @@ Integrity Measurement Register packages.
 """
 
 from abc import ABC, abstractmethod
-from cctrusted_base.tcg import TcgDigest, TcgAlgorithmRegistry
+from cctrusted_base.tcg import TcgDigest
 
 class TcgIMR(ABC):
     """Common Integrated Measurement Register class."""
@@ -56,21 +56,3 @@ class TcgIMR(ABC):
         """
         return self._index != TcgIMR._INVALID_IMR_INDEX and \
             self._index <= self.max_index
-
-class TdxRTMR(TcgIMR):
-    """RTMR class defined for Intel TDX."""
-
-    @property
-    def max_index(self):
-        return 3
-
-    def __init__(self, index, digest_hash):
-        super().__init__(index, TcgAlgorithmRegistry.TPM_ALG_SHA384,
-                        digest_hash)
-
-class TpmPCR(TcgIMR):
-    """PCR class defined for TPM"""
-
-    @property
-    def max_index(self):
-        return 23

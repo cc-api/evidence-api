@@ -42,7 +42,7 @@ def main():
         level=logging.NOTSET,
         format="%(name)s %(levelname)-8s %(message)s"
     )
-    quote = CCTrustedVmSdk.inst().get_quote(None, None, None)
+    quote = CCTrustedVmSdk.inst().get_quote()
     if quote is not None:
         quote.dump(args.out_format == OUT_FORMAT_RAW)
     else:
