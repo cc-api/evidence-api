@@ -5,8 +5,12 @@ edition = "2021"
 license = "Apache-2.0"
 
 [[bin]]
-name = "cc-sample"
-path = "src/cc-sample.rs"
+name = "cc-sample-quote"
+path = "src/cc-sample-quote.rs"
+
+[[bin]]
+name = "cc-sample-measurement"
+path = "src/cc-sample-measurement.rs"
 
 [dependencies]
 cctrusted_vm = { path = "../cctrusted_vm" }

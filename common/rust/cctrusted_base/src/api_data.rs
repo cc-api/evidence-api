@@ -38,3 +38,18 @@ pub struct Algorithm {
     pub algo_id: u8,
     pub algo_id_str: String,
 }
+
+/***
+ ********************************************
+ * API get_measurement_count() related data *
+ ********************************************
+ */
+// return number of measurement registers in a CVM
+
+/***
+ ********************************************
+ * API get_cc_measurement() related data *
+ ********************************************
+ */
+// the return data structure is defined in cctrusted_base as:
+// cctrusted_base::tcg::TcgDigest
