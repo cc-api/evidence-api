@@ -57,3 +57,15 @@ pub fn dump_data(data: &Vec<u8>) {
         info!("{} {}", linestr, printstr);
     }
 }
+
+pub fn get_u8(data: Vec<u8>) -> u8 {
+    u8::from_le_bytes(data[0..1].try_into().unwrap())
+}
+
+pub fn get_u16(data: Vec<u8>) -> u16 {
+    u16::from_le_bytes(data[0..2].try_into().unwrap())
+}
+
+pub fn get_u32(data: Vec<u8>) -> u32 {
+    u32::from_le_bytes(data[0..4].try_into().unwrap())
+}

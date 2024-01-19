@@ -73,3 +73,6 @@ pub enum QeCertDataType {
 }
 pub const TDX_QUOTE_VERSION_4: u16 = 4;
 pub const TDX_QUOTE_VERSION_5: u16 = 5;
+
+pub const ACPI_TABLE_FILE: &str = "/sys/firmware/acpi/tables/CCEL";
+pub const ACPI_TABLE_DATA_FILE: &str = "/sys/firmware/acpi/tables/data/CCEL";

@@ -35,7 +35,7 @@ pub struct CcReport {
  */
 // return structure for get_default_algorithm
 pub struct Algorithm {
-    pub algo_id: u8,
+    pub algo_id: u16,
     pub algo_id_str: String,
 }
 
