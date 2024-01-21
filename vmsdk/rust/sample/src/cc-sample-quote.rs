@@ -31,7 +31,7 @@ fn main() {
 
     // dump the cc report with API "dump_cc_report"
     //info!("call cc trusted API [dump_cc_report] to dump cc report!");
-    //API::dump_cc_report(&report.cc_report);
+    API::dump_cc_report(&report.cc_report);
 
     // parse the cc report with API "parse_cc_report"
     if report.cc_type == TeeType::TDX {
