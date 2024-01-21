@@ -1,6 +1,6 @@
 use crate::api_data::Algorithm;
 use crate::api_data::*;
-use crate::eventlog::TcgEventLog;
+use crate::tcg::EventLogEntry;
 use crate::tcg::TcgDigest;
 use core::result::Result;
 
@@ -64,7 +64,7 @@ pub trait CCTrustedApi {
         Returns:
             TcgDigest struct
     */
-    fn get_cc_measurement(index: u8, algo_id: u8) -> Result<TcgDigest, anyhow::Error>;
+    fn get_cc_measurement(index: u8, algo_id: u16) -> Result<TcgDigest, anyhow::Error>;
 
     /***
         Get eventlog for given index and count.
@@ -76,9 +76,12 @@ pub trait CCTrustedApi {
         OS type and cloud native type event beyond the measured-boot.
 
         Returns:
-            TcgEventLog struct
+            EventLogEntry struct
     */
-    fn get_cc_eventlog(_start: u16, _count: u16) -> TcgEventLog;
+    fn get_cc_eventlog(
+        start: Option<u32>,
+        count: Option<u32>,
+    ) -> Result<Vec<EventLogEntry>, anyhow::Error>;
 
     /***
         Get the default Digest algorithms supported by trusted foundation.

@@ -3,6 +3,9 @@
 use crate::cvm::*;
 use anyhow::*;
 use cctrusted_base::cc_type::*;
+use cctrusted_base::eventlog::TcgEventLog;
+use cctrusted_base::tcg::EventLogEntry;
+use cctrusted_base::tcg::TcgEfiSpecIdEvent;
 use cctrusted_base::tcg::*;
 use cctrusted_base::tdx::common::*;
 use cctrusted_base::tdx::quote::*;
@@ -16,6 +19,9 @@ use core::result::Result::Ok;
 use log::info;
 use nix::*;
 use std::fs::File;
+use std::io::BufReader;
+use std::io::Read;
+use std::ops::Not;
 use std::os::fd::AsRawFd;
 use std::path::Path;
 
@@ -37,10 +43,16 @@ pub struct TdxVM {
     pub cc_type: CcType,
     pub version: TdxVersion,
     pub device_node: DeviceNode,
-    pub algo_id: u8,
+    pub algo_id: u16,
 }
 
 // implement the structure method and associated function
+impl Default for TdxVM {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl TdxVM {
     // TdxVM struct associated function: to build a TdxVM sturcture instance
     pub fn new() -> TdxVM {
@@ -125,16 +137,13 @@ impl TdxVM {
                 );
 
                 //apply the ioctl command
-                match unsafe {
+                if let Err(e) = unsafe {
                     get_report_1_0_ioctl(
                         device_node.as_raw_fd(),
                         ptr::addr_of!(request) as *mut u64,
                     )
                 } {
-                    Err(e) => {
-                        return Err(anyhow!("[get_td_report] Fail to get TDX report: {:?}", e))
-                    }
-                    Ok(_) => (),
+                    return Err(anyhow!("[get_td_report] Fail to get TDX report: {:?}", e));
                 };
 
                 Ok(td_report.to_vec())
@@ -161,16 +170,13 @@ impl TdxVM {
                 );
 
                 //apply the ioctl command
-                match unsafe {
+                if let Err(e) = unsafe {
                     get_report_1_5_ioctl(
                         device_node.as_raw_fd(),
                         ptr::addr_of!(request) as *mut tdx_1_5_report_req,
                     )
                 } {
-                    Err(e) => {
-                        return Err(anyhow!("[get_td_report] Fail to get TDX report: {:?}", e))
-                    }
-                    Ok(_) => (),
+                    return Err(anyhow!("[get_td_report] Fail to get TDX report: {:?}", e));
                 };
 
                 Ok(request.tdreport.to_vec())
@@ -330,7 +336,7 @@ impl CVM for TdxVM {
     }
 
     // CVM trait function: retrieve TDX RTMR
-    fn process_cc_measurement(&self, index: u8, algo_id: u8) -> Result<TcgDigest, anyhow::Error> {
+    fn process_cc_measurement(&self, index: u8, algo_id: u16) -> Result<TcgDigest, anyhow::Error> {
         match TdxRTMR::is_valid_index(index) {
             Ok(_) => (),
             Err(e) => return Err(anyhow!("[process_cc_measurement] {:?}", e)),
@@ -368,8 +374,48 @@ impl CVM for TdxVM {
     }
 
     // CVM trait function: retrieve TDX CCEL and IMA eventlog
-    fn process_cc_eventlog(&self) {
-        todo!()
+    fn process_cc_eventlog(
+        &self,
+        start: Option<u32>,
+        count: Option<u32>,
+    ) -> Result<Vec<EventLogEntry>, anyhow::Error> {
+        if !Path::new(ACPI_TABLE_FILE).exists() {
+            return Err(anyhow!(
+                "[process_cc_eventlog] Failed to find TDX CCEL table at {:?}",
+                ACPI_TABLE_FILE
+            ));
+        }
+
+        if !Path::new(ACPI_TABLE_DATA_FILE).exists() {
+            return Err(anyhow!(
+                "[process_cc_eventlog] Failed to find TDX CCEL data file at {:?}",
+                ACPI_TABLE_DATA_FILE
+            ));
+        }
+
+        let ccel_file = File::open(ACPI_TABLE_FILE)?;
+        let mut ccel_reader = BufReader::new(ccel_file);
+        let mut ccel = Vec::new();
+        ccel_reader.read_to_end(&mut ccel)?;
+        let ccel_char_vec = vec!['C', 'C', 'E', 'L'];
+        let ccel_u8_vec: Vec<u8> = ccel_char_vec.iter().map(|c| *c as u8).collect::<Vec<_>>();
+        if (ccel.len() > 0).not() || (ccel[0..4].to_vec() != ccel_u8_vec) {
+            return Err(anyhow!("[process_cc_eventlog] Invalid CCEL table"));
+        }
+
+        let ccel_data_file = File::open(ACPI_TABLE_DATA_FILE)?;
+        let mut ccel_data_reader = BufReader::new(ccel_data_file);
+        let mut ccel_data = Vec::new();
+        ccel_data_reader.read_to_end(&mut ccel_data)?;
+
+        let mut raw_eventlogs = TcgEventLog {
+            spec_id_header_event: TcgEfiSpecIdEvent::new(),
+            data: ccel_data,
+            event_logs: Vec::new(),
+            count: 0,
+        };
+
+        raw_eventlogs.select(start, count)
     }
 
     // CVM trait function: retrive CVM type
@@ -391,7 +437,7 @@ impl CVM for TdxVM {
 
 impl TcgAlgorithmRegistry for TdxVM {
     // TcgAlgorithmRegistry trait function: return CVM default algorithm ID
-    fn get_algorithm_id(&self) -> u8 {
+    fn get_algorithm_id(&self) -> u16 {
         self.algo_id
     }
 
