@@ -16,6 +16,7 @@ class TcgAlgorithmRegistry:
     TPM_ALG_ERROR = 0x0
     TPM_ALG_RSA = 0x1
     TPM_ALG_TDES = 0x3
+    TPM_ALG_SHA1 = 0xA
     TPM_ALG_SHA256 = 0xB
     TPM_ALG_SHA384 = 0xC
     TPM_ALG_SHA512 = 0xD
@@ -23,9 +24,17 @@ class TcgAlgorithmRegistry:
     TPM_ALG_TABLE = {
         TPM_ALG_RSA: "TPM_ALG_RSA",
         TPM_ALG_TDES: "TPM_ALG_TDES",
+        TPM_ALG_SHA1: "TPM_ALG_SHA1",
         TPM_ALG_SHA256: "TPM_ALG_SHA256",
         TPM_ALG_SHA384: "TPM_ALG_SHA384",
         TPM_ALG_SHA512: "TPM_ALG_SHA512"
+    }
+
+    TPM_ALG_HASH_DIGEST_SIZE_TABLE = {
+        TPM_ALG_SHA1: 20,
+        TPM_ALG_SHA256: 32,
+        TPM_ALG_SHA384: 48,
+        TPM_ALG_SHA512: 64
     }
 
     @staticmethod
@@ -113,6 +122,9 @@ class TcgEventType:
     EV_EFI_HANDOFF_TABLES = EV_EFI_EVENT_BASE + 0x9
     EV_EFI_VARIABLE_AUTHORITY = EV_EFI_EVENT_BASE + 0x10
 
+    # IMA event type defined aligned with MSFT
+    IMA_MEASUREMENT_EVENT = 0x13
+
     TCG_EVENT_TYPE_TABLE = {
         EV_PREBOOT_CERT: "EV_PREBOOT_CERT",
         EV_POST_CODE: "EV_POST_CODE",
@@ -143,7 +155,8 @@ class TcgEventType:
         EV_EFI_ACTION: "EV_EFI_ACTION",
         EV_EFI_PLATFORM_FIRMWARE_BLOB: "EV_EFI_PLATFORM_FIRMWARE_BLOB",
         EV_EFI_HANDOFF_TABLES: "EV_EFI_HANDOFF_TABLES",
-        EV_EFI_VARIABLE_AUTHORITY: "EV_EFI_VARIABLE_AUTHORITY"
+        EV_EFI_VARIABLE_AUTHORITY: "EV_EFI_VARIABLE_AUTHORITY",
+        IMA_MEASUREMENT_EVENT: "IMA_MEASUREMENT_EVENT"
     }
 
     def __init__(self, event_type:int) -> None:
@@ -223,7 +236,8 @@ class TcgImrEvent:
 
     def dump(self):
         """Dump data."""
-        LOG.info("-------------------------------Event Log Entry-----------------------------")
+        # pylint: disable-next=line-too-long
+        LOG.info("----------------------------------Event Log Entry---------------------------------")
         LOG.info("IMR               : %d", self._imr_index)
         LOG.info("Type              : 0x%X (%s)", self._event_type,
                                  TcgEventType.get_event_type_string(self._event_type))

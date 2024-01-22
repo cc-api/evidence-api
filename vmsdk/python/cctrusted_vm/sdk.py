@@ -7,6 +7,7 @@ import logging
 from cctrusted_base.api import CCTrustedApi
 from cctrusted_base.imr import TcgIMR
 from cctrusted_base.quote import Quote
+from cctrusted_base.eventlog import EventLogs
 from cctrusted_base.eventlog import TcgEventLog
 from cctrusted_base.tcg import TcgAlgorithmRegistry
 from cctrusted_vm.cvm import ConfidentialVM
@@ -112,7 +113,7 @@ class CCTrustedVmSdk(CCTrustedApi):
         """
         return self._cvm.get_quote(nonce, data, extraArgs)
 
-    def get_eventlog(self, start:int = None, count:int = None) -> TcgEventLog:
+    def get_eventlog(self, start:int = None, count:int = None) -> EventLogs:
         """Get eventlog for given index and count.
 
         TCG log in Eventlog. Verify to spoof events in the TCG log, hence defeating
@@ -121,9 +122,10 @@ class CCTrustedVmSdk(CCTrustedApi):
         OS type and cloud native type event beyond the measured-boot.
 
         Returns:
-            ``TcgEventLog`` object.
+            ``Eventlogs`` object containing all event logs following TCG PCClient Spec.
         """
-        event_logs = TcgEventLog(self._cvm.cc_event_log)
+        event_logs = EventLogs(self._cvm.boot_time_event_log, self._cvm.runtime_event_log,
+                               TcgEventLog.TCG_PCCLIENT_FORMAT)
         event_logs.select(start, count)
 
         return event_logs
