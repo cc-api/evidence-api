@@ -121,6 +121,10 @@ class CCTrustedVmSdk(CCTrustedApi):
         To measure the full CC runtime environment, the eventlog may include addtional
         OS type and cloud native type event beyond the measured-boot.
 
+        Args:
+            start(int): the first index of event log to fetch
+            count(int): the number of event logs to fetch
+
         Returns:
             ``Eventlogs`` object containing all event logs following TCG PCClient Spec.
         """
@@ -129,3 +133,23 @@ class CCTrustedVmSdk(CCTrustedApi):
         event_logs.select(start, count)
 
         return event_logs
+
+    def replay_eventlog(self, event_logs:EventLogs) -> dict:
+        """Replay event logs based on data provided.
+
+        TCG event logs can be replayed against IMR measurements to prove the integrity of
+        the event logs.
+
+        Args:
+            event_logs(Eventlogs): the ``Eventlogs`` object to replay
+
+        Returns:
+            A dictionary containing the replay result displayed by IMR index and hash algorithm. 
+            Layer 1 key of the dict is the IMR index, the value is another dict which using the
+            hash algorithm as the key and the replayed measurement as value.
+            Sample value:
+                { 0: { 12: <measurement_replayed>}}
+        """
+        replay_res = event_logs.replay()
+
+        return replay_res

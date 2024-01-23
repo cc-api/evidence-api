@@ -3,6 +3,7 @@ TCG compliant Event log
 """
 
 import logging
+from hashlib import sha1, sha256, sha384, sha512
 from cctrusted_base.binaryblob import BinaryBlob
 from cctrusted_base.tcg import TcgAlgorithmRegistry
 from cctrusted_base.tcg import TcgDigest
@@ -398,3 +399,53 @@ class EventLogs:
         return TcgEventLog(rec_num, int(elements[base_idx]),
                            TcgEventType.IMA_MEASUREMENT_EVENT, digests,
                            event_size, event, extra_info)
+
+    def replay(self) -> dict:
+        """
+        Replay event logs by IMR index.
+
+        Returns:
+            A dictionary containing the replay result displayed by IMR index and hash algorithm. 
+            Layer 1 key of the dict is the IMR index, the value is another dict which using the
+            hash algorithm as the key and the replayed measurement as value.
+            Sample value:
+                { 0: { 12: <measurement_replayed>}}
+        """
+        measurement_dict = {}
+        for event in self._event_logs:
+            # Skip TcgPcClientImrEvent during replay
+            if isinstance(event, TcgPcClientImrEvent):
+                continue
+
+            # pylint: disable-next=consider-iterating-dictionary
+            if event.imr_index not in measurement_dict.keys():
+                measurement_dict[event.imr_index] = {}
+
+            for digest in event.digests:
+                alg_id = digest.alg.alg_id
+                hash_val = digest.hash
+
+                # Check algorithm type and prepare for replay
+                match alg_id:
+                    case TcgAlgorithmRegistry.TPM_ALG_SHA1:
+                        algo = sha1()
+                    case TcgAlgorithmRegistry.TPM_ALG_SHA384:
+                        algo = sha384()
+                    case TcgAlgorithmRegistry.TPM_ALG_SHA256:
+                        algo = sha256()
+                    case TcgAlgorithmRegistry.TPM_ALG_SHA512:
+                        algo = sha512()
+                    case _:
+                        LOG.error("Unsupported hash algorithm %d", alg_id)
+                        continue
+
+                # Initialize value if alg_id not found in dict
+                if alg_id not in measurement_dict[event.imr_index].keys():
+                    measurement_dict[event.imr_index][alg_id] = bytearray(
+                        TcgAlgorithmRegistry.TPM_ALG_HASH_DIGEST_SIZE_TABLE[alg_id])
+
+                # Do replay and update the result into dict
+                algo.update(measurement_dict[event.imr_index][alg_id] + hash_val)
+                measurement_dict[event.imr_index][alg_id] = algo.digest()
+
+        return measurement_dict
