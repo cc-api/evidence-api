@@ -2,6 +2,7 @@ use crate::binary_blob::*;
 use crate::tcg::*;
 use anyhow::anyhow;
 use hashbrown::HashMap;
+use hex;
 
 /***
 *  This is the common struct for tcg event logs to be delivered in different formats.
@@ -451,7 +452,7 @@ impl EventLogs {
         let algo_id = TcgDigest::get_algorithm_id_from_digest_size(digest_size.try_into().unwrap());
         let digest = TcgDigest {
             algo_id,
-            hash: elements[1].as_bytes().to_vec(),
+            hash: hex::decode(elements[1]).expect("Decoding failed"),
         };
         digests.push(digest);
 
