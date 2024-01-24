@@ -261,7 +261,7 @@ impl Tdx {
     }
 
     pub fn parse_td_report(
-        report: &Vec<u8>,
+        report: &[u8],
         tdx_version: TdxVersion,
     ) -> Result<TDReport, anyhow::Error> {
         let report_mac_struct = unsafe {

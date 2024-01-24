@@ -76,7 +76,7 @@ pub trait CCTrustedApi {
         OS type and cloud native type event beyond the measured-boot.
 
         Returns:
-            EventLogEntry struct
+            Vector of EventLogEntry
     */
     fn get_cc_eventlog(
         start: Option<u32>,
