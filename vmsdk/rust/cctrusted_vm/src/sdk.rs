@@ -449,6 +449,7 @@ mod sdk_api_tests {
                         tcg_pc_client_imr_event.event.len().try_into().unwrap()
                     );
                 }
+                EventLogEntry::TcgCanonicalEvent(_) => todo!(),
             }
         }
     }

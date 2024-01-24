@@ -10,6 +10,9 @@ pub const TPM_ALG_SHA384: u16 = 0xC;
 pub const TPM_ALG_SHA512: u16 = 0xD;
 pub const TPM_ALG_ECDSA: u16 = 0x18;
 
+pub const TCG_PCCLIENT_FORMAT: u8 = 1;
+pub const TCG_CANONICAL_FORMAT: u8 = 2;
+
 // hash algorithm ID to algorithm name string map
 lazy_static! {
     pub static ref ALGO_NAME_MAP: HashMap<u16, String> = {
@@ -21,6 +24,17 @@ lazy_static! {
         map.insert(TPM_ALG_SHA384, "TPM_ALG_SHA384".to_string());
         map.insert(TPM_ALG_SHA512, "TPM_ALG_SHA512".to_string());
         map.insert(TPM_ALG_ECDSA, "TPM_ALG_ECDSA".to_string());
+        map
+    };
+}
+
+lazy_static! {
+    pub static ref TPM_DIGEST_SIZE_ALG_HASH_MAP: HashMap<u8, u16> = {
+        let mut map: HashMap<u8, u16> = HashMap::new();
+        map.insert(20, TPM_ALG_SHA1);
+        map.insert(32, TPM_ALG_SHA256);
+        map.insert(48, TPM_ALG_SHA384);
+        map.insert(64, TPM_ALG_SHA512);
         map
     };
 }
@@ -50,6 +64,13 @@ impl TcgDigest {
 
     pub fn get_hash(&self) -> Vec<u8> {
         self.hash.clone()
+    }
+
+    pub fn get_algorithm_id_from_digest_size(digest_size: u8) -> u16 {
+        match TPM_DIGEST_SIZE_ALG_HASH_MAP.get(&digest_size) {
+            Some(algo_id) => *algo_id,
+            None => TPM_ALG_ERROR,
+        }
     }
 }
 
@@ -107,6 +128,7 @@ pub const EV_EFI_ACTION: u32 = EV_EFI_EVENT_BASE + 0x7;
 pub const EV_EFI_PLATFORM_FIRMWARE_BLOB: u32 = EV_EFI_EVENT_BASE + 0x8;
 pub const EV_EFI_HANDOFF_TABLES: u32 = EV_EFI_EVENT_BASE + 0x9;
 pub const EV_EFI_VARIABLE_AUTHORITY: u32 = EV_EFI_EVENT_BASE + 0x10;
+pub const IMA_MEASUREMENT_EVENT: u32 = 0x13;
 
 lazy_static! {
     pub static ref TCG_EVENT_TYPE_NAME_MAP: HashMap<u32, String> = {
@@ -165,11 +187,12 @@ lazy_static! {
             EV_EFI_VARIABLE_AUTHORITY,
             "EV_EFI_VARIABLE_AUTHORITY".to_string(),
         );
+        map.insert(IMA_MEASUREMENT_EVENT, "IMA_MEASUREMENT_EVENT".to_string());
         map
     };
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct TcgEventType {}
 
 impl TcgEventType {
@@ -293,9 +316,13 @@ pub struct TcgEfiSpecIdEventAlgorithmSize {
 }
 
 #[derive(Clone)]
+pub struct TcgCanonicalEvent {}
+
+#[derive(Clone)]
 pub enum EventLogEntry {
     TcgImrEvent(TcgImrEvent),
     TcgPcClientImrEvent(TcgPcClientImrEvent),
+    TcgCanonicalEvent(TcgCanonicalEvent),
 }
 
 impl EventLogEntry {
@@ -305,6 +332,7 @@ impl EventLogEntry {
             EventLogEntry::TcgPcClientImrEvent(tcg_pc_client_imr_event) => {
                 &tcg_pc_client_imr_event.show()
             }
+            EventLogEntry::TcgCanonicalEvent(_) => todo!(),
         };
     }
 }
