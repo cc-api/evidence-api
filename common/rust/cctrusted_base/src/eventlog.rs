@@ -73,7 +73,7 @@ impl TcgEventLog {
         runtime_data: raw data containing runtime event logs(now IMA events)
         event_logs: all parsed event logs
         count: total number of event logs
-        special_flag: flag to identify if there're customized runtime
+        parse_format: event log format used
 */
 #[derive(Clone)]
 pub struct EventLogs {
@@ -432,6 +432,12 @@ impl EventLogs {
            A TcgEventLog object containing the ima event log
     */
     fn parse_ima_event_log(&mut self, data: &str) -> Result<TcgEventLog, anyhow::Error> {
+        /*  after the split, the elements vec has following mapping:
+                elements[0] => IMR index
+                elements[1] => Template hash
+                elements[2] => Template name
+                elements[3] to end of vec => Event data according to template
+         */
         let elements: Vec<&str> = data.trim_matches(' ').split(' ').collect();
 
         let imr_index: u32 = elements[0].parse().unwrap();
