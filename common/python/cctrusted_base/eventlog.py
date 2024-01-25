@@ -87,7 +87,7 @@ class EventLogs:
         runtime_data: raw data containing runtime event logs(now IMA events)
         event_logs: all parsed event logs
         count: total number of event logs
-        special_flag: flag to identify if there're customized runtime event logs
+        parse_format: event log format used for parsing
     """
     spec_id_header_event = None
     # Initiate the record number list for each index with default value 0
@@ -98,7 +98,7 @@ class EventLogs:
         self._runtime_data = runtime_data
         self._event_logs = []
         self._count:int = 0
-        self._format:str = parse_format
+        self._parse_format:str = parse_format
 
     @property
     def event_logs(self):
@@ -147,7 +147,7 @@ class EventLogs:
             start: index of the first event log to collect
             count: total number of event logs to collect
         """
-        self._parse(self._format)
+        self._parse()
 
         if start is not None:
             if not 0 < start <= self._count:
@@ -180,7 +180,7 @@ class EventLogs:
 
         return rec_num
 
-    def _parse(self, parse_format:str) -> None:
+    def _parse(self) -> None:
         """Parse event log data into TCG compatible forms.
 
         Run through all event log data and parse the contents accordingly
@@ -205,12 +205,12 @@ class EventLogs:
                 spec_id_event, event_len = \
                     self._parse_spec_id_event_log(self._boot_time_data[start:])
                 index = start + event_len
-                self._event_logs.append(spec_id_event.format_event_log(parse_format))
+                self._event_logs.append(spec_id_event.format_event_log(self._parse_format))
                 self._count += 1
             else:
                 event_log, event_len = self._parse_event_log(self._boot_time_data[start:])
                 index = start + event_len
-                self._event_logs.append(event_log.format_event_log(parse_format))
+                self._event_logs.append(event_log.format_event_log(self._parse_format))
                 self._count += 1
 
         if self._runtime_data is None:
@@ -218,7 +218,7 @@ class EventLogs:
 
         for event in self._runtime_data.splitlines():
             event_log = self._parse_ima_event_log(event)
-            self._event_logs.append(event_log.format_event_log(parse_format))
+            self._event_logs.append(event_log.format_event_log(self._parse_format))
             self._count += 1
 
     def _parse_spec_id_event_log(self, data:bytes) -> (TcgEventLog, int):
@@ -357,20 +357,15 @@ class EventLogs:
         """
 
         # Split the IMA ascii event log entry using space for processing
-        elements = event.decode().split(" ")
+        elements = event.decode().strip().split(" ")
 
-        # IMR index value affects the spliting result.
-        # Number less than 10 will leave an extra space at front.
-        base_idx = 0
-        if elements[0] == "":
-            base_idx = 1
-
-        # imr_idx contains the element index that stores the IMR index
-        # digest_idx containes the element index that stores digest
-        # template_idx contains the element index that stores the template name
-        imr_idx = base_idx
-        digest_idx = imr_idx + 1
-        template_idx = digest_idx + 1
+        # the first element stores the IMR index
+        # the second element stores the digest
+        # the third element stores the template name
+        # rest contains the raw event data
+        imr_idx = 0
+        digest_idx = 1
+        template_idx = 2
 
         rec_num = self._get_record_number(int(elements[imr_idx]))
 
@@ -395,6 +390,6 @@ class EventLogs:
             "template_name": elements[template_idx]
         }
 
-        return TcgEventLog(rec_num, int(elements[base_idx]),
+        return TcgEventLog(rec_num, int(elements[imr_idx]),
                            TcgEventType.IMA_MEASUREMENT_EVENT, digests,
                            event_size, event, extra_info)
