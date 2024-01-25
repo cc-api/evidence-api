@@ -97,6 +97,26 @@ pub trait CCTrustedApi {
 
     */
     fn get_default_algorithm() -> Result<Algorithm, anyhow::Error>;
+
+    /***
+       Replay event logs based on data provided.
+       TCG event logs can be replayed against IMR measurements to prove the integrity of
+       the event logs.
+       Args:
+           event_logs(Eventlogs): the ``Eventlogs`` object to replay
+       Returns:
+           A struct containing the replay result arranged by IMR index and hash algorithm.
+           Layer 1 key of the struct is the IMR index, the value is another dict which using the
+           hash algorithm as the key and the replayed measurement as value.
+           Sample value:
+               [
+                   0: [{ 4: <measurement_replayed>},{ 12: <measurement_replayed>},]
+                   1: { 12: <measurement_replayed>},
+               ]
+    */
+    fn replay_cc_eventlog(
+        eventlogs: Vec<EventLogEntry>,
+    ) -> Result<Vec<ReplayResult>, anyhow::Error>;
 }
 
 /***

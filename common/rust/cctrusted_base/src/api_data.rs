@@ -1,4 +1,5 @@
 use crate::cc_type::TeeType;
+use crate::tcg::TcgDigest;
 
 /***
  ************************************
@@ -53,3 +54,21 @@ pub struct Algorithm {
  */
 // the return data structure is defined in cctrusted_base as:
 // cctrusted_base::tcg::TcgDigest
+
+/***
+ ********************************************
+ * API get_cc_eventlog() related data *
+ ********************************************
+ */
+// the return data structure is defined in cctrusted_base as:
+// crate::tcg::EventLogEntry
+
+/***
+ ********************************************
+ * API replay_eventlog() related data *
+ ********************************************
+ */
+pub struct ReplayResult {
+    pub imr_index: u32,
+    pub digests: Vec<TcgDigest>,
+}
