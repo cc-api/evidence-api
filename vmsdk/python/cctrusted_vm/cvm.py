@@ -163,8 +163,8 @@ class ConfidentialVM:
             if cc_type is ConfidentialVM.TYPE_CC_TDX:
                 obj = TdxVM()
             else:
-                LOG.error("Unknown confidential environment.")
-                return
+                LOG.error("Unsupported confidential environment.")
+                return None
 
             if obj is not None and obj.init():
                 ConfidentialVM._inst = obj
