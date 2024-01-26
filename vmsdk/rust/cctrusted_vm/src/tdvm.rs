@@ -2,6 +2,7 @@
 
 use crate::cvm::*;
 use anyhow::*;
+use cctrusted_base::api_data::ReplayResult;
 use cctrusted_base::cc_type::*;
 use cctrusted_base::eventlog::EventLogs;
 use cctrusted_base::tcg::EventLogEntry;
@@ -431,6 +432,13 @@ impl CVM for TdxVM {
 
         let mut eventlogs = EventLogs::new(boot_time_data, run_time_data, TCG_PCCLIENT_FORMAT);
         eventlogs.select(start, count)
+    }
+
+    fn replay_eventlog(
+        &self,
+        eventlogs: Vec<EventLogEntry>,
+    ) -> Result<Vec<ReplayResult>, anyhow::Error> {
+        EventLogs::replay(eventlogs)
     }
 
     // CVM trait function: retrive CVM type
