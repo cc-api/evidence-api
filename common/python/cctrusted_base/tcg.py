@@ -87,7 +87,7 @@ class TcgDigest:
 
 class TcgEventType:
     """TCG EventType defined at
-    https://trustedcomputinggroup.org/wp-content/uploads/TCG_EFI_Platform_1_22_Final_-v15.pdf
+    https://trustedcomputinggroup.org/wp-content/uploads/PC-Client-Platform-Firmware-Profile-Version-1.06-Revision-52_pub.pdf.
     """
 
     EV_PREBOOT_CERT = 0x0
@@ -109,6 +109,7 @@ class TcgEventType:
     EV_NONHOST_CONFIG = 0x10
     EV_NONHOST_INFO = 0x11
     EV_OMIT_BOOT_DEVICE_EVENTS = 0x12
+    EV_POST_CODE2 = 0x13
 
     EV_EFI_EVENT_BASE = 0x80000000
     EV_EFI_VARIABLE_DRIVER_CONFIG = EV_EFI_EVENT_BASE + 0x1
@@ -120,10 +121,19 @@ class TcgEventType:
     EV_EFI_ACTION = EV_EFI_EVENT_BASE + 0x7
     EV_EFI_PLATFORM_FIRMWARE_BLOB = EV_EFI_EVENT_BASE + 0x8
     EV_EFI_HANDOFF_TABLES = EV_EFI_EVENT_BASE + 0x9
-    EV_EFI_VARIABLE_AUTHORITY = EV_EFI_EVENT_BASE + 0x10
+    EV_EFI_PLATFORM_FIRMWARE_BLOB2 = EV_EFI_EVENT_BASE + 0xa
+    EV_EFI_HANDOFF_TABLES2 = EV_EFI_EVENT_BASE + 0xb
+    EV_EFI_VARIABLE_BOOT2 = EV_EFI_EVENT_BASE + 0xc
+    EV_EFI_GPT_EVENT2 = EV_EFI_EVENT_BASE + 0xd
+    EV_EFI_HCRTM_EVENT = EV_EFI_EVENT_BASE + 0x10
+    EV_EFI_VARIABLE_AUTHORITY = EV_EFI_EVENT_BASE + 0xe0
+    EV_EFI_SPDM_FIRMWARE_BLOB = EV_EFI_EVENT_BASE + 0xe1
+    EV_EFI_SPDM_FIRMWARE_CONFIG = EV_EFI_EVENT_BASE + 0xe2
+    EV_EFI_SPDM_DEVICE_POLICY = EV_EFI_EVENT_BASE + 0xe3
+    EV_EFI_SPDM_DEVICE_AUTHORITY = EV_EFI_EVENT_BASE + 0xe4
 
     # IMA event type defined aligned with MSFT
-    IMA_MEASUREMENT_EVENT = 0x13
+    IMA_MEASUREMENT_EVENT = 0x14
 
     TCG_EVENT_TYPE_TABLE = {
         EV_PREBOOT_CERT: "EV_PREBOOT_CERT",
@@ -145,6 +155,7 @@ class TcgEventType:
         EV_NONHOST_CONFIG: "EV_NONHOST_CONFIG",
         EV_NONHOST_INFO: "EV_NONHOST_INFO",
         EV_OMIT_BOOT_DEVICE_EVENTS: "EV_OMIT_BOOT_DEVICE_EVENTS",
+        EV_POST_CODE2: "EV_POST_CODE2",
         EV_EFI_EVENT_BASE: "EV_EFI_EVENT_BASE",
         EV_EFI_VARIABLE_DRIVER_CONFIG: "EV_EFI_VARIABLE_DRIVER_CONFIG",
         EV_EFI_VARIABLE_BOOT: "EV_EFI_VARIABLE_BOOT",
@@ -156,11 +167,20 @@ class TcgEventType:
         EV_EFI_PLATFORM_FIRMWARE_BLOB: "EV_EFI_PLATFORM_FIRMWARE_BLOB",
         EV_EFI_HANDOFF_TABLES: "EV_EFI_HANDOFF_TABLES",
         EV_EFI_VARIABLE_AUTHORITY: "EV_EFI_VARIABLE_AUTHORITY",
+        EV_EFI_PLATFORM_FIRMWARE_BLOB2: "EV_EFI_PLATFORM_FIRMWARE_BLOB2",
+        EV_EFI_HANDOFF_TABLES2: "EV_EFI_HANDOFF_TABLES2",
+        EV_EFI_VARIABLE_BOOT2: "EV_EFI_VARIABLE_BOOT2",
+        EV_EFI_GPT_EVENT2: "EV_EFI_GPT_EVENT2",
+        EV_EFI_HCRTM_EVENT: "EV_EFI_HCRTM_EVENT",
+        EV_EFI_SPDM_FIRMWARE_BLOB: "EV_EFI_SPDM_FIRMWARE_BLOB",
+        EV_EFI_SPDM_FIRMWARE_CONFIG: "EV_EFI_SPDM_FIRMWARE_CONFIG",
+        EV_EFI_SPDM_DEVICE_POLICY: "EV_EFI_SPDM_DEVICE_POLICY",
+        EV_EFI_SPDM_DEVICE_AUTHORITY: "EV_EFI_SPDM_DEVICE_AUTHORITY",
         IMA_MEASUREMENT_EVENT: "IMA_MEASUREMENT_EVENT"
     }
 
     def __init__(self, event_type:int) -> None:
-        if event_type in TcgEventType.TCG_EVENT_TYPE_TABLE:
+        if event_type not in TcgEventType.TCG_EVENT_TYPE_TABLE:
             raise ValueError(f'invalid parameter event_type {event_type}')
         self._event_type = event_type
 
@@ -233,6 +253,31 @@ class TcgImrEvent:
     def event(self) -> bytes:
         """Event data."""
         return self._event
+
+    def parse_event_data(self):
+        """Parse event data according to event type."""
+        match self._event_type:
+            case (TcgEventType.EV_EFI_VARIABLE_DRIVER_CONFIG | TcgEventType.EV_EFI_VARIABLE_BOOT |
+                  TcgEventType.EV_EFI_VARIABLE_BOOT2 | TcgEventType.EV_EFI_VARIABLE_AUTHORITY):
+                # event data compliant to UEFI_VARIABLE_DATA
+                return TcgUefiVariableData.parse(self._event)
+            case (TcgEventType.EV_POST_CODE2 | TcgEventType.EV_S_CRTM_CONTENTS |
+                  TcgEventType.EV_EFI_PLATFORM_FIRMWARE_BLOB2):
+                # event data compliant to UEFI_PLATFORM_FIRMWARE_BLOB2
+                return TcgUefiPlatformFirmwareBlob2.parse(self._event)
+            case TcgEventType.EV_POST_CODE:
+                # event data compliant to UEFI_PLATFORM_FIRMWARE_BLOB
+                return TcgUefiPlatformFirmwareBlob.parse(self._event)
+            case TcgEventType.EV_EFI_HANDOFF_TABLES2:
+                # event data compliant to UEFI_HANDOFF_TABLE_POINTERS2
+                return TcgUefiHandoffTablePointers2.parse(self._event)
+            case (TcgEventType.EV_ACTION | TcgEventType.EV_EFI_ACTION |
+                  TcgEventType.EV_PLATFORM_CONFIG_FLAGS | TcgEventType.EV_EFI_HCRTM_EVENT):
+                # event data is ascii string
+                return self._event.decode("ascii")
+            case _:
+                # for other types, return raw event data
+                return self._event
 
     def dump(self):
         """Dump data."""
@@ -420,3 +465,196 @@ class TcgEfiSpecIdEventAlgorithmSize:
     def digest_size(self):
         """Digest_size."""
         return self._digest_size
+
+class TcgUefiVariableData:
+    """TCG UEFI_VARIABLE_DATA defined at
+    https://trustedcomputinggroup.org/wp-content/uploads/PC-Client-Platform-Firmware-Profile-Version-1.06-Revision-52_pub.pdf.
+    """
+    def __init__(
+        self,
+        variable_name:bytes=None,
+        unicode_name_length:int=None,
+        variable_data_length:int=None,
+        unicode_name:bytearray=None,
+        variable_data:list[int]=None
+    ) -> None:
+        self._variable_name = variable_name
+        self._unicode_name_length = unicode_name_length
+        self._variable_data_length = variable_data_length
+        self._unicode_name = unicode_name
+        self._variable_data = variable_data
+
+    @property
+    def variable_name(self):
+        """Variable name."""
+        return self._variable_name
+
+    @property
+    def unicode_name_length(self):
+        """Length of unicode name."""
+        return self._unicode_name_length
+
+    @property
+    def variable_data_length(self):
+        """Length of variable data."""
+        return self._variable_data_length
+
+    @property
+    def unicode_name(self):
+        """Unicode name."""
+        return self._unicode_name
+
+    @property
+    def variable_data(self):
+        """Variable data."""
+        return self._variable_data
+
+    @classmethod
+    def parse(cls, raw_data:bytes):
+        """Parse TcgUefiVariableData from raw event data"""
+        blob = BinaryBlob(raw_data, 0)
+        index = 0
+
+        variable_name, index = blob.get_bytes(index, 16)
+        unicode_name_length, index = blob.get_uint64(index)
+        variable_data_length, index = blob.get_uint64(index)
+        unicode_name, index = blob.get_bytes(index, unicode_name_length*2)
+        variable_data = []
+        for _ in range(variable_data_length):
+            data, index = blob.get_uint8(index)
+            variable_data.append(data)
+        return TcgUefiVariableData(variable_name, unicode_name_length,
+                                   variable_data_length, unicode_name, variable_data)
+
+class TcgUefiPlatformFirmwareBlob2:
+    """TCG UEFI_PLATFORM_FIRMWARE_BLOB2 defined at
+    https://trustedcomputinggroup.org/wp-content/uploads/PC-Client-Platform-Firmware-Profile-Version-1.06-Revision-52_pub.pdf.
+    """
+    def __init__(
+        self,
+        blob_description_size:int=None,
+        blob_description:bytes=None,
+        blob_base:int=None,
+        blob_length:int=None
+    ) -> None:
+        self._blob_description_size = blob_description_size
+        self._blob_description = blob_description
+        self._blob_base = blob_base
+        self._blob_length = blob_length
+
+    @property
+    def blob_description(self):
+        """Blob description."""
+        return self._blob_description
+
+    @property
+    def blob_description_size(self):
+        """Blob description size."""
+        return self._blob_description_size
+
+    @property
+    def blob_base(self):
+        """Blob base."""
+        return self._blob_base
+
+    @property
+    def blob_length(self):
+        """Blob length."""
+        return self._blob_length
+
+    @classmethod
+    def parse(cls, raw_data:bytes):
+        """Parse TcgUefiPlatformFirmwareBlob from raw event data"""
+        blob = BinaryBlob(raw_data, 0)
+        index = 0
+
+        blob_description_size, index = blob.get_uint8(index)
+        blob_description, index = blob.get_bytes(index, blob_description_size)
+        blob_base, index = blob.get_uint64(index)
+        blob_length, _ = blob.get_uint64(index)
+
+        return TcgUefiPlatformFirmwareBlob2(blob_description_size, blob_description,
+                                            blob_base, blob_length)
+
+class TcgUefiPlatformFirmwareBlob:
+    """TCG UEFI_PLATFORM_FIRMWARE_BLOB defined at
+    https://trustedcomputinggroup.org/wp-content/uploads/PC-Client-Platform-Firmware-Profile-Version-1.06-Revision-52_pub.pdf.
+    """
+    def __init__(self, blob_base:int=None, blob_length:int=None) -> None:
+        self._blob_base = blob_base
+        self._blob_length = blob_length
+
+    @property
+    def blob_base(self):
+        """Blob base"""
+        return self._blob_base
+
+    @property
+    def blob_length(self):
+        """Blob Length"""
+        return self._blob_length
+
+    @classmethod
+    def parse(cls, raw_data:bytes):
+        """Parse TcgUefiPlatformFirmwareBlob from raw event data"""
+        blob = BinaryBlob(raw_data, 0)
+        index = 0
+
+        blob_base, index = blob.get_uint64(index)
+        blob_length, _ = blob.get_uint64(index)
+
+        return TcgUefiPlatformFirmwareBlob(blob_base, blob_length)
+
+class TcgUefiHandoffTablePointers2:
+    """TCG UEFI_HANDOFF_TABLE_POINTERS2 defined at
+    https://trustedcomputinggroup.org/wp-content/uploads/PC-Client-Platform-Firmware-Profile-Version-1.06-Revision-52_pub.pdf.
+    """
+    def __init__(
+        self,
+        table_entry=None,
+        table_description_size:int=None,
+        table_description:bytearray=None,
+        number_of_tables:int=None
+        ) -> None:
+        self._table_description_size = table_description_size
+        self._table_description = table_description
+        self._number_of_tables = number_of_tables
+        self._table_entry = table_entry
+
+    @property
+    def table_description_size(self):
+        """Table description size."""
+        return self._table_description_size
+
+    @property
+    def table_description(self):
+        """Table description."""
+        return self._table_description
+
+    @property
+    def number_of_tables(self):
+        """Number of tables."""
+        return self._number_of_tables
+
+    @property
+    def table_entry(self):
+        """Table entries."""
+        return self._table_entry
+
+    @classmethod
+    def parse(cls, raw_data:bytes):
+        """Parse raw data into UEFI_HANDOFF_TABLE_POINTERS2 structure."""
+        blob = BinaryBlob(raw_data, 0)
+        index = 0
+
+        table_description_size, index = blob.get_uint8(index)
+        table_description, index = blob.get_bytes(index, table_description_size)
+        num_of_table, index = blob.get_uint64(index)
+        table_entries = []
+        if num_of_table > 0:
+            size = (len(raw_data) - index)/num_of_table
+        for _ in range(num_of_table):
+            table_data, index = blob.get_bytes(index, size)
+            table_entries.append(table_data)
+        return TcgUefiHandoffTablePointers2(table_entries, table_description_size,
+                                            table_description, num_of_table)

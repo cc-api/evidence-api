@@ -64,8 +64,9 @@ class TcgEventLog:
 
            Return different class according to event type
         """
-        if self._event_type == TcgEventType.EV_NO_ACTION :
-            return TcgPcClientImrEvent(self._imr_index, self._event_size, self._digests[0].hash,
+        if (self._event_type == TcgEventType.EV_NO_ACTION and self._rec_num == 0 and
+            self._imr_index == 0):
+            return TcgPcClientImrEvent(self._imr_index, self._event_type, self._digests[0].hash,
                                        self._event_size, self._event)
 
         return TcgImrEvent(self._imr_index, self._event_type, self._digests, self._event_size,
@@ -202,7 +203,7 @@ class EventLogs:
             if imr == 0xFFFFFFFF:
                 break
 
-            if event_type == TcgEventType.EV_NO_ACTION:
+            if event_type == TcgEventType.EV_NO_ACTION and self._count == 0:
                 spec_id_event, event_len = \
                     self._parse_spec_id_event_log(self._boot_time_data[start:])
                 index = start + event_len
