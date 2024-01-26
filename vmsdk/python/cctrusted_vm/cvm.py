@@ -158,10 +158,15 @@ class ConfidentialVM:
     def inst():
         """Singleton interface for the instance of CcLinuxStub"""
         if ConfidentialVM._inst is None:
+            obj = None
             cc_type = ConfidentialVM.detect_cc_type()
             if cc_type is ConfidentialVM.TYPE_CC_TDX:
                 obj = TdxVM()
-            if obj.init():
+            else:
+                LOG.error("Unsupported confidential environment.")
+                return None
+
+            if obj is not None and obj.init():
                 ConfidentialVM._inst = obj
             else:
                 LOG.error("Fail to initialize the confidential VM.")
