@@ -376,13 +376,16 @@ class TdxVM(ConfidentialVM):
 
         Returns:
             The ``Quote`` object.
+
+        Raises:
+            binascii.Error when the parameter "nonce" or "data" is not base64 encoded.
         """
 
         # Prepare user defined data which could include nonce
         if nonce is not None:
-            nonce = base64.b64decode(nonce)
+            nonce = base64.b64decode(nonce, validate=True)
         if data is not None:
-            data = base64.b64decode(data)
+            data = base64.b64decode(data, validate=True)
         report_bytes = None
         input_data = None
         if nonce is None and data is None:

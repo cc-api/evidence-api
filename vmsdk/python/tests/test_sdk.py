@@ -1,5 +1,8 @@
 """Containing unit test cases for sdk class"""
 
+from cctrusted_base.quote import Quote, QuoteData, QuoteSignature
+from cctrusted_base.eventlog import EventLogs
+from cctrusted_base.tcg import TcgEfiSpecIdEvent, TcgImrEvent, TcgPcClientImrEvent
 import pytest
 
 def test_get_default_algorithms(vm_sdk, default_alg_id):
@@ -45,11 +48,41 @@ def test_get_eventlog_with_invalid_input(vm_sdk):
 
 def test_get_eventlog_with_valid_input(vm_sdk):
     """Test get_eventlog() funtion with valid input."""
-    event_logs = vm_sdk.get_eventlog()
-    assert event_logs is not None
+    eventlog = vm_sdk.get_eventlog()
 
-def test_get_quote_with_valid_input(vm_sdk, check_quote):
+    # Check 1: the eventlog should not be None.
+    assert eventlog is not None
+
+    # Check 2: the object type should be correct.
+    assert isinstance(eventlog, EventLogs)
+    logs = eventlog.event_logs
+    assert logs is not None
+    assert isinstance(logs, list)
+    event_count = 0
+    for e in logs:
+        event_count += 1
+        assert isinstance(e, (TcgImrEvent, TcgPcClientImrEvent, TcgEfiSpecIdEvent))
+    assert event_count == eventlog.count
+
+def test_get_quote_with_valid_input(vm_sdk, check_quote_valid_input):
     """Test get_quote() function with valid input."""
     quote = vm_sdk.get_quote(None, None, None)
+
+    # Check 1: the quote should not be None.
     assert quote is not None
-    check_quote()
+
+    # Check 2: the object type should be correct.
+    assert isinstance(quote, Quote)
+    quoted_data = quote.get_quoted_data()
+    assert quoted_data is not None
+    assert isinstance(quoted_data, QuoteData)
+    sigature_data = quote.get_sig()
+    assert sigature_data is not None
+    assert isinstance(sigature_data, QuoteSignature)
+
+    # Check 3: platform specific check.
+    check_quote_valid_input()
+
+def test_get_quote_with_invalid_input(vm_sdk, check_quote_invalid_input):
+    """Test get_quote() function with invalid input."""
+    check_quote_invalid_input()
