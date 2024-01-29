@@ -6,9 +6,11 @@ on:
       - main
     paths:
       - 'vmsdk/**/*.py'
+      - 'common/**/*.py'
   pull_request:
     paths:
       - 'vmsdk/**/*.py'
+      - 'common/**/*.py'
   workflow_dispatch:
 
 jobs:
