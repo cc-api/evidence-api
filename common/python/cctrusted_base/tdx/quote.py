@@ -8,8 +8,9 @@ import struct
 
 from abc import ABC, abstractmethod
 from enum import Enum
+from cctrusted_base.api import CCTrustedApi
 from cctrusted_base.binaryblob import BinaryBlob
-from cctrusted_base.quote import Quote, QuoteData, QuoteSignature
+from cctrusted_base.ccreport import CcReport, CcReportData, CcReportSignature
 from cctrusted_base.tdx.common import TDX_QUOTE_VERSION_4, TDX_QUOTE_VERSION_5
 from cctrusted_base.tdx.common import TDX_VERSION_1_0, TDX_VERSION_1_5
 
@@ -536,7 +537,7 @@ class TdxQuoteQeCert(BinaryBlob):
             # Default output raw data in hex string
             super().dump()
 
-class TdxQuoteEcdsa256Sigature(QuoteSignature):
+class TdxQuoteEcdsa256Sigature(CcReportSignature):
     """TD Quote ECDSA 256-bit Quote Signature.
 
     Atrributes:
@@ -588,7 +589,7 @@ class TdxQuoteEcdsa256Sigature(QuoteSignature):
             # Default output raw data in hex string
             super().dump()
 
-class TdxQuoteSignature(QuoteSignature):
+class TdxQuoteSignature(CcReportSignature):
     """TD Quote Signature."""
 
     def __init__(self, data: bytearray):
@@ -614,7 +615,7 @@ class TdxQuoteSignature(QuoteSignature):
         else:
             super().dump()
 
-class TdxQuote(Quote):
+class TdxQuote(CcReport):
     """TDX Quote.
 
     Atrributes:
@@ -647,7 +648,7 @@ class TdxQuote(Quote):
     TODO: implement version 5 according to A.4. Version 5 Quote Format.
     """
 
-    def __init__(self, data: bytearray):
+    def __init__(self, data: bytearray, cc_type):
         """Initialize attributes according to spec.
 
         It saves raw data in the attribute of its super class and parses
@@ -656,7 +657,7 @@ class TdxQuote(Quote):
         Args:
             data: A bytearray of the raw data.
         """
-        super().__init__(data)
+        super().__init__(data, cc_type)
         v = memoryview(self.data)
         self.header = TdxQuoteHeader(v[0:48].tobytes())
         version = self.header.ver
@@ -677,7 +678,7 @@ class TdxQuote(Quote):
         else:
             info(f'TD Quote Version {self.header.ver} is not supported!')
 
-    def get_quoted_data(self) -> QuoteData:
+    def get_quoted_data(self) -> CcReportData:
         """Get TD Quoted Data.
 
         Returns:
@@ -685,7 +686,7 @@ class TdxQuote(Quote):
         """
         return self.body
 
-    def get_sig(self) -> QuoteSignature:
+    def get_sig(self) -> CcReportSignature:
         """Get TD Quote signature.
 
         Returns:
@@ -977,4 +978,4 @@ class TdxQuoteReq15(TdxQuoteReq):
             An instance of ``TdxQuote``.
         """
         tdquote_bytes = self.get_tdquote_bytes_from_req(rawdata)
-        return TdxQuote(tdquote_bytes)
+        return TdxQuote(tdquote_bytes, CCTrustedApi.TYPE_CC_TDX)

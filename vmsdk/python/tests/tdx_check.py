@@ -11,7 +11,7 @@ def _replay_eventlog():
     rtmr_len = TdxRTMR.RTMR_LENGTH_BY_BYTES
     rtmr_cnt = TdxRTMR.RTMR_COUNT
     rtmrs = [bytearray(rtmr_len)] * rtmr_cnt
-    event_logs = CCTrustedVmSdk.inst().get_eventlog().event_logs
+    event_logs = CCTrustedVmSdk.inst().get_cc_eventlog().event_logs
     assert event_logs is not None
     for event in event_logs:
         if isinstance(event, TcgImrEvent):
@@ -32,7 +32,7 @@ def _check_imr(imr_index: int, alg_id: int, rtmr: bytes):
     assert 0 <= imr_index < TdxRTMR.RTMR_COUNT
     assert rtmr is not None
     assert alg_id == TcgAlgorithmRegistry.TPM_ALG_SHA384
-    imr = CCTrustedVmSdk.inst().get_measurement([imr_index, alg_id])
+    imr = CCTrustedVmSdk.inst().get_cc_measurement([imr_index, alg_id])
     assert imr is not None
     digest_obj = imr.digest(alg_id)
     assert digest_obj is not None
@@ -60,7 +60,7 @@ def tdx_check_quote_rtmrs():
     The test is done by compare the RTMRs in quote body against the value
     derived by replay eventlog.
     """
-    quote = CCTrustedVmSdk.inst().get_quote()
+    quote = CCTrustedVmSdk.inst().get_cc_report()
     assert quote is not None
     assert isinstance(quote, TdxQuote)
     body = quote.body

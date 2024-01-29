@@ -2,9 +2,9 @@
 TPM Quote related classes.
 """
 
-from cctrusted_base.quote import Quote, QuoteData, QuoteSignature
+from cctrusted_base.ccreport import CcReport, CcReportData, CcReportSignature
 
-class Tpm2Quote(Quote):
+class Tpm2Quote(CcReport):
     """TPM 2 Quote.
 
     References:
@@ -21,21 +21,21 @@ class Tpm2Quote(Quote):
         sig: signature
     """
 
-    def __init__(self, data: bytearray):
+    def __init__(self, data: bytearray, cc_type):
         """Initialize instance with raw data.
 
         Args:
             data: A bytearray storing the raw data.
         """
-        super().__init__(data)
+        super().__init__(data, cc_type)
         # TODO: parse raw data into header, body and sigature
 
-    def get_quoted_data(self) -> QuoteData:
+    def get_quoted_data(self) -> CcReportData:
         """Get TPM2 quote header."""
         # TODO: parse the raw data to get quoted data
         return None
 
-    def get_sig(self) -> QuoteSignature:
+    def get_sig(self) -> CcReportSignature:
         """Get TPM2 quote signature."""
         # TODO: parse the raw data to get signature
         return None

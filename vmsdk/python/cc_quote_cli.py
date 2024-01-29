@@ -48,7 +48,7 @@ def make_userdata():
     return userdata
 
 def main():
-    """Example to call get_quote and dump the result to stdout."""
+    """Example to call get_cc_report and dump the result to stdout."""
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--out-format",
@@ -70,7 +70,7 @@ def main():
     userdata = make_userdata()
     LOG.info("demo user data in base64: %s", userdata.decode("utf-8"))
 
-    quote = CCTrustedVmSdk.inst().get_quote(nonce, userdata)
+    quote = CCTrustedVmSdk.inst().get_cc_report(nonce, userdata)
     if quote is not None:
         quote.dump(args.out_format == OUT_FORMAT_RAW)
     else:

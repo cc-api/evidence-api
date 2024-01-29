@@ -13,8 +13,9 @@ import logging
 import struct
 import fcntl
 from abc import abstractmethod
+from cctrusted_base.api import CCTrustedApi
 from cctrusted_base.imr import TcgIMR
-from cctrusted_base.quote import Quote
+from cctrusted_base.ccreport import CcReport
 from cctrusted_base.tcg import TcgAlgorithmRegistry
 from cctrusted_base.tdx.common import TDX_VERSION_1_0, TDX_VERSION_1_5
 from cctrusted_base.tdx.rtmr import TdxRTMR
@@ -24,17 +25,6 @@ from cctrusted_base.tdx.report import TdxReportReq10, TdxReportReq15
 LOG = logging.getLogger(__name__)
 
 class ConfidentialVM:
-
-    TYPE_CC_NONE = -1
-    TYPE_CC_TDX = 0
-    TYPE_CC_SEV = 1
-    TYPE_CC_CCA = 2
-
-    TYPE_CC_STRING = {
-        TYPE_CC_TDX: "TDX",
-        TYPE_CC_SEV: "SEV",
-        TYPE_CC_CCA: "CCA"
-    }
 
     _inst = None
 
@@ -70,7 +60,7 @@ class ConfidentialVM:
     @property
     def cc_type_str(self):
         """the CC type string."""
-        return ConfidentialVM.TYPE_CC_STRING[self.cc_type]
+        return CCTrustedApi.cc_type_str[self.cc_type]
 
     @property
     def boot_time_event_log(self):
@@ -106,8 +96,8 @@ class ConfidentialVM:
         # TODO: refine the justification
         for devpath in TdxVM.DEVICE_NODE_PATH.values():
             if os.path.exists(devpath):
-                return ConfidentialVM.TYPE_CC_TDX
-        return ConfidentialVM.TYPE_CC_NONE
+                return CCTrustedApi.TYPE_CC_TDX
+        return CCTrustedApi.TYPE_CC_NONE
 
     @abstractmethod
     def process_cc_report(self, report_data=None) -> bool:
@@ -128,7 +118,7 @@ class ConfidentialVM:
         raise NotImplementedError("Should be implemented by inherited class")
 
     @abstractmethod
-    def get_quote(self, nonce: bytearray, data: bytearray, extraArgs) -> Quote:
+    def get_cc_report(self, nonce: bytearray, data: bytearray, extraArgs) -> CcReport:
         """Get the quote for given nonce and data.
 
         The quote is signing of attestation data (IMR values or hashes of IMR
@@ -160,7 +150,7 @@ class ConfidentialVM:
         if ConfidentialVM._inst is None:
             obj = None
             cc_type = ConfidentialVM.detect_cc_type()
-            if cc_type is ConfidentialVM.TYPE_CC_TDX:
+            if cc_type is CCTrustedApi.TYPE_CC_TDX:
                 obj = TdxVM()
             else:
                 LOG.error("Unsupported confidential environment.")
@@ -228,7 +218,7 @@ class TdxVM(ConfidentialVM):
     IMA_DATA_FILE = "/sys/kernel/security/integrity/ima/ascii_runtime_measurements"
 
     def __init__(self):
-        ConfidentialVM.__init__(self, ConfidentialVM.TYPE_CC_TDX)
+        ConfidentialVM.__init__(self, CCTrustedApi.TYPE_CC_TDX)
         self._version:str = None
         self._tdreport = None
 
@@ -357,7 +347,7 @@ class TdxVM(ConfidentialVM):
         return True
 
 
-    def get_quote(self, nonce: bytearray, data: bytearray, extraArgs) -> Quote:
+    def get_cc_report(self, nonce: bytearray, data: bytearray, extraArgs) -> CcReport:
         """Get quote.
 
         This depends on Quote Generation Service. Please reference "Whitepaper:
