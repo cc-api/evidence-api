@@ -107,7 +107,7 @@ The example code is refer to [cc_quote_cli.py](/vmsdk/python/cc_quote_cli.py) or
 ```
 from cctrusted import CCTrustedVmSdk
 
-quote = CCTrustedVmSdk.inst().get_quote(None, None, None)
+quote = CCTrustedVmSdk.inst().get_cc_report(None, None, None)
 if quote is not None:
     quote.dump(args.out_format == OUT_FORMAT_RAW)
 ```

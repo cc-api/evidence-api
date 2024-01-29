@@ -25,7 +25,7 @@ def main():
                         type=lambda x: (str(x).lower() in ['true','1', 'yes']))
     args = parser.parse_args()
 
-    event_logs = CCTrustedVmSdk.inst().get_eventlog(args.start, args.count)
+    event_logs = CCTrustedVmSdk.inst().get_cc_eventlog(args.start, args.count)
     if event_logs is not None:
         LOG.info("Total %d of event logs fetched.", len(event_logs.event_logs))
         event_logs.dump(args.out_format)

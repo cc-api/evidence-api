@@ -12,7 +12,7 @@ logging.basicConfig(level=logging.NOTSET, format='%(name)s %(levelname)-8s %(mes
 count = CCTrustedVmSdk.inst().get_measurement_count()
 for index in range(CCTrustedVmSdk.inst().get_measurement_count()):
     alg = CCTrustedVmSdk.inst().get_default_algorithms()
-    imr = CCTrustedVmSdk.inst().get_measurement([index, alg.alg_id])
+    imr = CCTrustedVmSdk.inst().get_cc_measurement([index, alg.alg_id])
     digest_obj = imr.digest(alg.alg_id)
 
     hash_str = ""
