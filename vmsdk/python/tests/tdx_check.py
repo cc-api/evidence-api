@@ -1,7 +1,7 @@
 """TDX specific test."""
 
 from hashlib import sha384
-from cctrusted_base.tcg import TcgAlgorithmRegistry, TcgImrEvent
+from cctrusted_base.tcg import TcgAlgorithmRegistry, TcgEventType
 from cctrusted_base.tdx.quote import TdxQuote, TdxQuoteBody
 from cctrusted_base.tdx.rtmr import TdxRTMR
 from cctrusted_vm.sdk import CCTrustedVmSdk
@@ -14,7 +14,7 @@ def _replay_eventlog():
     event_logs = CCTrustedVmSdk.inst().get_eventlog().event_logs
     assert event_logs is not None
     for event in event_logs:
-        if isinstance(event, TcgImrEvent):
+        if event.event_type != TcgEventType.EV_NO_ACTION:
             sha384_algo = sha384()
             sha384_algo.update(rtmrs[event.imr_index] + event.digests[0].hash)
             rtmrs[event.imr_index] = sha384_algo.digest()
