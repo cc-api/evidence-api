@@ -29,7 +29,7 @@ class CcReport(BinaryBlob):
     @property
     def cc_type(self):
         """Get the CC (Confidential Computing) type."""
-        return self.cc_type
+        return self._cc_type
 
     @abstractmethod
     def get_quoted_data(self) -> CcReportData:

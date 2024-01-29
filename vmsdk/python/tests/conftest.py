@@ -30,10 +30,31 @@ cnf_measurement_check = {
 The configurations could be different for different confidential VMs.
 """
 
-cnf_quote_check = {
-    CCTrustedApi.TYPE_CC_TDX: tdx_check.tdx_check_quote_rtmrs
+cnf_quote_check_valid_input = {
+    CCTrustedApi.TYPE_CC_TDX: tdx_check.tdx_check_quote_with_valid_input
 }
-"""Configurations of quote check functions.
+"""Configurations of quote check functions for valid input.
+The configurations could be different for different confidential VMs.
+"""
+
+cnf_quote_check_invalid_input = {
+    CCTrustedApi.TYPE_CC_TDX: tdx_check.tdx_check_quote_with_invalid_input
+}
+"""Configurations of quote check functions for invalid input.
+The configurations could be different for different confidential VMs.
+"""
+
+cnf_replay_eventlog_check_valid_input = {
+    CCTrustedApi.TYPE_CC_TDX: tdx_check.tdx_check_replay_eventlog_with_valid_input
+}
+"""Configurations of replay_eventlog check functions for valid input.
+The configurations could be different for different confidential VMs.
+"""
+
+cnf_replay_eventlog_check_invalid_input = {
+    CCTrustedApi.TYPE_CC_TDX: tdx_check.tdx_check_replay_eventlog_with_invalid_input
+}
+"""Configurations of replay_eventlog check functions for invalid input.
 The configurations could be different for different confidential VMs.
 """
 
@@ -61,7 +82,25 @@ def check_measurement():
     return cnf_measurement_check[cc_type]
 
 @pytest.fixture(scope="module")
-def check_quote():
-    """Return checker for quote."""
+def check_quote_valid_input():
+    """Return checker for quote when input is valid."""
     cc_type = ConfidentialVM.detect_cc_type()
-    return cnf_quote_check[cc_type]
+    return cnf_quote_check_valid_input[cc_type]
+
+@pytest.fixture(scope="module")
+def check_quote_invalid_input():
+    """Return checker for quote when input is invalid."""
+    cc_type = ConfidentialVM.detect_cc_type()
+    return cnf_quote_check_invalid_input[cc_type]
+
+@pytest.fixture(scope="module")
+def check_replay_eventlog_valid_input():
+    """Return checker for replay_eventlog when input is valid."""
+    cc_type = ConfidentialVM.detect_cc_type()
+    return cnf_replay_eventlog_check_valid_input[cc_type]
+
+@pytest.fixture(scope="module")
+def check_replay_eventlog_invalid_input():
+    """Return checker for replay_eventlog when input is invalid."""
+    cc_type = ConfidentialVM.detect_cc_type()
+    return cnf_replay_eventlog_check_invalid_input[cc_type]

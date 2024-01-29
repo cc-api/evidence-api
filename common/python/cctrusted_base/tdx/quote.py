@@ -201,7 +201,7 @@ class TdxQuoteTeeTcbSvn(BinaryBlob):
             # Default output raw data in hex string
             super().dump()
 
-class TdxQuoteBody(BinaryBlob):
+class TdxQuoteBody(CcReportData):
     """TD Quote Body.
 
     We define TdxQuoteBody as the base class of Version 4 Quote Format and Version 5 Quote Format.
