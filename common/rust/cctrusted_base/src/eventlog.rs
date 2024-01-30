@@ -45,7 +45,7 @@ impl TcgEventLog {
     }
 
     fn to_tcg_pcclient_format(&self) -> EventLogEntry {
-        if self.event_type == EV_NO_ACTION {
+        if self.event_type == EV_NO_ACTION && self.rec_num == 0 && self.imr_index == 0 {
             return EventLogEntry::TcgPcClientImrEvent(TcgPcClientImrEvent {
                 imr_index: self.imr_index,
                 event_type: self.event_type,
@@ -205,7 +205,7 @@ impl EventLogs {
                 break;
             }
 
-            if event_type == EV_NO_ACTION {
+            if event_type == EV_NO_ACTION && self.count == 0 {
                 match self.parse_spec_id_event_log(self.boot_time_data[start..].to_vec()) {
                     Ok((spec_id_event, event_len)) => {
                         index = start + event_len as usize;
@@ -515,6 +515,9 @@ impl EventLogs {
         for event_log in eventlogs {
             match event_log {
                 EventLogEntry::TcgImrEvent(tcg_imr_event) => {
+                    if tcg_imr_event.event_type == EV_NO_ACTION {
+                        continue;
+                    }
                     let imr_index = tcg_imr_event.imr_index;
                     for digest in tcg_imr_event.digests {
                         let algo_id = digest.algo_id;

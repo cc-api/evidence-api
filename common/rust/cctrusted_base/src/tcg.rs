@@ -113,7 +113,7 @@ pub trait TcgIMR {
 
 /***
     TCG EventType defined at
-    https://trustedcomputinggroup.org/wp-content/uploads/TCG_EFI_Platform_1_22_Final_-v15.pdf
+   https://trustedcomputinggroup.org/wp-content/uploads/PC-Client-Platform-Firmware-Profile-Version-1.06-Revision-52_pub.pdf
 */
 pub const EV_PREBOOT_CERT: u32 = 0x0;
 pub const EV_POST_CODE: u32 = 0x1;
@@ -134,6 +134,7 @@ pub const EV_NONHOST_CODE: u32 = 0xf;
 pub const EV_NONHOST_CONFIG: u32 = 0x10;
 pub const EV_NONHOST_INFO: u32 = 0x11;
 pub const EV_OMIT_BOOT_DEVICE_EVENTS: u32 = 0x12;
+pub const EV_POST_CODE2: u32 = 0x13;
 
 pub const EV_EFI_EVENT_BASE: u32 = 0x80000000;
 pub const EV_EFI_VARIABLE_DRIVER_CONFIG: u32 = EV_EFI_EVENT_BASE + 0x1;
@@ -145,8 +146,18 @@ pub const EV_EFI_GPT_EVENT: u32 = EV_EFI_EVENT_BASE + 0x6;
 pub const EV_EFI_ACTION: u32 = EV_EFI_EVENT_BASE + 0x7;
 pub const EV_EFI_PLATFORM_FIRMWARE_BLOB: u32 = EV_EFI_EVENT_BASE + 0x8;
 pub const EV_EFI_HANDOFF_TABLES: u32 = EV_EFI_EVENT_BASE + 0x9;
-pub const EV_EFI_VARIABLE_AUTHORITY: u32 = EV_EFI_EVENT_BASE + 0x10;
-pub const IMA_MEASUREMENT_EVENT: u32 = 0x13;
+pub const EV_EFI_PLATFORM_FIRMWARE_BLOB2: u32 = EV_EFI_EVENT_BASE + 0xa;
+pub const EV_EFI_HANDOFF_TABLES2: u32 = EV_EFI_EVENT_BASE + 0xb;
+pub const EV_EFI_VARIABLE_BOOT2: u32 = EV_EFI_EVENT_BASE + 0xc;
+pub const EV_EFI_GPT_EVENT2: u32 = EV_EFI_EVENT_BASE + 0xd;
+pub const EV_EFI_HCRTM_EVENT: u32 = EV_EFI_EVENT_BASE + 0x10;
+pub const EV_EFI_VARIABLE_AUTHORITY: u32 = EV_EFI_EVENT_BASE + 0xe0;
+pub const EV_EFI_SPDM_FIRMWARE_BLOB: u32 = EV_EFI_EVENT_BASE + 0xe1;
+pub const EV_EFI_SPDM_FIRMWARE_CONFIG: u32 = EV_EFI_EVENT_BASE + 0xe2;
+pub const EV_EFI_SPDM_DEVICE_POLICY: u32 = EV_EFI_EVENT_BASE + 0xe3;
+pub const EV_EFI_SPDM_DEVICE_AUTHORITY: u32 = EV_EFI_EVENT_BASE + 0xe4;
+
+pub const IMA_MEASUREMENT_EVENT: u32 = 0x14;
 
 lazy_static! {
     pub static ref TCG_EVENT_TYPE_NAME_MAP: HashMap<u32, String> = {
@@ -176,6 +187,7 @@ lazy_static! {
             EV_OMIT_BOOT_DEVICE_EVENTS,
             "EV_OMIT_BOOT_DEVICE_EVENTS".to_string(),
         );
+        map.insert(EV_POST_CODE2, "EV_POST_CODE2".to_string());
         map.insert(EV_EFI_EVENT_BASE, "EV_EFI_EVENT_BASE".to_string());
         map.insert(
             EV_EFI_VARIABLE_DRIVER_CONFIG,
@@ -204,6 +216,30 @@ lazy_static! {
         map.insert(
             EV_EFI_VARIABLE_AUTHORITY,
             "EV_EFI_VARIABLE_AUTHORITY".to_string(),
+        );
+        map.insert(
+            EV_EFI_PLATFORM_FIRMWARE_BLOB2,
+            "EV_EFI_PLATFORM_FIRMWARE_BLOB2".to_string(),
+        );
+        map.insert(EV_EFI_HANDOFF_TABLES2, "EV_EFI_HANDOFF_TABLES2".to_string());
+        map.insert(EV_EFI_VARIABLE_BOOT2, "EV_EFI_VARIABLE_BOOT2".to_string());
+        map.insert(EV_EFI_GPT_EVENT2, "EV_EFI_GPT_EVENT2".to_string());
+        map.insert(EV_EFI_HCRTM_EVENT, "EV_EFI_HCRTM_EVENT".to_string());
+        map.insert(
+            EV_EFI_SPDM_FIRMWARE_BLOB,
+            "EV_EFI_SPDM_FIRMWARE_BLOB".to_string(),
+        );
+        map.insert(
+            EV_EFI_SPDM_FIRMWARE_CONFIG,
+            "EV_EFI_SPDM_FIRMWARE_CONFIG".to_string(),
+        );
+        map.insert(
+            EV_EFI_SPDM_DEVICE_POLICY,
+            "EV_EFI_SPDM_DEVICE_POLICY".to_string(),
+        );
+        map.insert(
+            EV_EFI_SPDM_DEVICE_AUTHORITY,
+            "EV_EFI_SPDM_DEVICE_AUTHORITY".to_string(),
         );
         map.insert(IMA_MEASUREMENT_EVENT, "IMA_MEASUREMENT_EVENT".to_string());
         map
