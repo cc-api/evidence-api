@@ -37,8 +37,12 @@ def test_get_cc_measurement_with_valid_input(vm_sdk, check_measurement):
     check_measurement()
 
 def test_get_cc_eventlog_with_invalid_input(vm_sdk):
-    """Test get_cc_eventlog() function with invalid input."""
-    event_num = vm_sdk.get_cc_eventlog().count
+    """Test get_cc_eventlog() function with invalid input.
+
+    The test logic currently has an assumption that the return result of get_cc_eventlog
+    doesn't change if the input parameters are the same within a short period of time.
+    """
+    event_num = len(vm_sdk.get_cc_eventlog().event_logs)
     idx_min = 0
     idx_max = event_num - 1
     cnt_min = 1
@@ -49,8 +53,12 @@ def test_get_cc_eventlog_with_invalid_input(vm_sdk):
         invalid_start = idx_min - 1
         vm_sdk.get_cc_eventlog(start=invalid_start, count=1)
     with pytest.raises(ValueError):
-        invalid_start = idx_max + 1
+        invalid_start = idx_max + 2
         vm_sdk.get_cc_eventlog(start=invalid_start, count=1)
+    # a special case works as current design
+    invalid_start = idx_max + 1
+    eventlog = vm_sdk.get_cc_eventlog(start=invalid_start, count=1)
+    assert len(eventlog.event_logs) == 0
 
     # calling get_cc_eventlog with invalid "count"
     with pytest.raises(ValueError):
