@@ -157,6 +157,9 @@ class CCTrustedVmSdk(CCTrustedApi):
             Sample value:
                 { 0: { 12: <measurement_replayed>}}
         """
+        if event_logs is None:
+            LOG.error("Input event_logs should not be None.")
+            return None
         replay_res = event_logs.replay()
 
         return replay_res
