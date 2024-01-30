@@ -92,6 +92,10 @@ pub trait CCTrustedApi {
         Beyond the default digest algorithm, some trusted foundation like TPM
         may support multiple algorithms.
 
+        Args:
+            start: index of the first event log to collect, 0 stands for the first event log
+            count: total number of event logs to collect
+
         Returns:
             The Algorithm struct
 
