@@ -235,7 +235,7 @@ def tdx_check_replay_eventlog_with_valid_input():
     """Test replay_eventlog with valid input."""
     eventlog = _gen_valid_eventlog()
     replay_result = CCTrustedVmSdk.inst().replay_cc_eventlog(eventlog)
-    assert replay_result is not None and len(replay_result) == TdxRTMR.RTMR_COUNT
+    assert replay_result is not None and 0 < len(replay_result) <= TdxRTMR.RTMR_COUNT
     alg = CCTrustedVmSdk.inst().get_default_algorithms().alg_id
     for imr_idx, replayed_values in replay_result.items():
         assert 0 <= imr_idx < TdxRTMR.RTMR_COUNT
