@@ -52,7 +52,7 @@ The [APIs](common/python/cctrusted_base/api.py) are designed to be vendor agnost
 | get_default_algorithms | Get the default Digest algorithms supported by trusted foundation. | | A `TcgAlgorithmRegistry` object telling the default algorithms |
 | get_measurement_count | Get the count of measurement register. | | An integer telling the count of measurement registers |
 | get_cc_measurement | Get measurement register according to given selected index and algorithms. | imr_select ([int, int]): The first is index of measurement register, the second is the algorithms ID | An integer telling the count of measurement registers |
-| get_cc_report | Get the quote for given nonce and data. | nonce: a number used to protect private communications by preventing replay attacks<br> data: the data specified by user<br> extraArgs: the placeholder for extra arguments required in vTPM or other TEE cases  | A `Quote` object |
+| get_cc_report | Get the quote for given nonce and data. | nonce: a number used to protect private communications by preventing replay attacks<br> data: the data specified by user<br> extraArgs: the placeholder for extra arguments required in vTPM or other TEE cases  | A `CcReport` (i.e. quote) object |
 | get_cc_eventlog | Get eventlog for given index and count. | start: the index of the event log to start fetching<br> count: the number of event logs to fetch | A `TcgEventLog` object |
 
 ## 4. SDKs
@@ -136,7 +136,7 @@ __main__ INFO     HASH: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
 
 ### 5.2 Sample of `get_cc_report` API
 
-Below example code collect the Quote on the platform using `get_cc_report` API using `VMSDK` implemented by python.
+Below example code collect the CcReport (i.e. quote) on the platform using `get_cc_report` API using `VMSDK` implemented by python.
 
 ```
 from cctrusted import CCTrustedVmSdk
@@ -144,7 +144,7 @@ from cctrusted import CCTrustedVmSdk
 # Specify the `nonce`, `data` and `extraArgs` as None in the example
 quote = CCTrustedVmSdk.inst().get_cc_report(None, None, None)
 if quote is not None:
-    # Dump Quote object as raw data
+    # Dump CcReport (i.e. quote) object as raw data
     quote.dump(is_raw=True)
 ```
 

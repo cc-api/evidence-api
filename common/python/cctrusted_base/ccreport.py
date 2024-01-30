@@ -1,5 +1,5 @@
 """
-Quote data structures.
+CcReport (i.e. quote) data structures.
 """
 
 import logging
@@ -9,13 +9,13 @@ from cctrusted_base.binaryblob import BinaryBlob
 LOG = logging.getLogger(__name__)
 
 class CcReportData(BinaryBlob):
-    """Quote Data."""
+    """CcReport Data."""
 
 class CcReportSignature(BinaryBlob):
-    """Quote Signature."""
+    """CcReport Signature."""
 
 class CcReport(BinaryBlob):
-    """Quote base class."""
+    """CcReport base class."""
 
     def __init__(self, data: bytearray, cc_type):
         """Initialize instance with raw data.
@@ -41,7 +41,7 @@ class CcReport(BinaryBlob):
 
     @abstractmethod
     def dump(self, is_raw=True) -> None:
-        """Dump Quote Data.
+        """Dump CcReport Data.
 
         Args:
             is_raw:
