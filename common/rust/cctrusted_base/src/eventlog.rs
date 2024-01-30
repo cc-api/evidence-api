@@ -123,7 +123,7 @@ impl EventLogs {
     /***
         Collect selected event logs according to user input.
         Args:
-            start: index of the first event log to collect
+            start: index of the first event log to collect, 0 stands for the first event log
             count: total number of event logs to collect
     */
     pub fn select(
@@ -140,20 +140,28 @@ impl EventLogs {
 
         let begin = match start {
             Some(s) => {
-                if s == 0 || s >= self.count {
-                    return Err(anyhow!("[select] Invalid input start. Start must be number larger than 0 and smaller than total event log count."));
+                if s > self.count {
+                    return Err(anyhow!("[select] Invalid input start. Start must be number no bigger than total event log count! Current number of eventlog is {}", self.count));
+                } else if s == self.count {
+                    return Ok(Vec::new());
+                } else {
+                    s
                 }
-                s - 1
             }
             None => 0,
         };
 
         let end = match count {
             Some(c) => {
-                if c == 0 || c >= self.count {
-                    return Err(anyhow!("[select] Invalid input count. count must be number larger than 0 and smaller than total event log count."));
+                if c == 0 {
+                    return Err(anyhow!(
+                        "[select] Invalid input count. count must be number larger than 0!"
+                    ));
+                } else if c + begin > self.count {
+                    self.event_logs.len()
+                } else {
+                    (c + begin).try_into().unwrap()
                 }
-                (c + begin).try_into().unwrap()
             }
             None => self.event_logs.len(),
         };
