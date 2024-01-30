@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 # pylint: disable=unused-import
 from cctrusted_base.imr import TcgIMR
 from cctrusted_base.ccreport import CcReport
-from cctrusted_base.eventlog import TcgEventLog
+from cctrusted_base.eventlog import EventLogs
 from cctrusted_base.tcg import TcgAlgorithmRegistry
 
 class CCTrustedApi(ABC):
@@ -107,7 +107,7 @@ class CCTrustedApi(ABC):
         raise NotImplementedError("Inherited SDK class should implement this.")
 
     @abstractmethod
-    def get_cc_eventlog(self, start:int = None, count:int = None) -> TcgEventLog:
+    def get_cc_eventlog(self, start:int = None, count:int = None) -> EventLogs:
         """Get eventlog for given index and count.
 
         TCG log in Eventlog. Verify to spoof events in the TCG log, hence defeating
@@ -115,7 +115,30 @@ class CCTrustedApi(ABC):
         To measure the full CC runtime environment, the eventlog may include addtional
         OS type and cloud native type event beyond the measured-boot.
 
+        Args:
+            start(int): the first index of event log to fetch
+            count(int): the number of event logs to fetch
+
         Returns:
-            ``TcgEventLog`` object.
+            ``Eventlogs`` object containing all event logs following TCG PCClient Spec.
+        """
+        raise NotImplementedError("Inherited SDK class should implement this.")
+
+    @abstractmethod
+    def replay_cc_eventlog(self, event_logs:EventLogs) -> dict:
+        """Replay event logs based on data provided.
+
+        TCG event logs can be replayed against IMR measurements to prove the integrity of
+        the event logs.
+
+        Args:
+            event_logs(Eventlogs): the ``Eventlogs`` object to replay
+
+        Returns:
+            A dictionary containing the replay result displayed by IMR index and hash algorithm.
+            Layer 1 key of the dict is the IMR index, the value is another dict which using the
+            hash algorithm as the key and the replayed measurement as value.
+            Sample value:
+                { 0: { 12: <measurement_replayed>}}
         """
         raise NotImplementedError("Inherited SDK class should implement this.")
