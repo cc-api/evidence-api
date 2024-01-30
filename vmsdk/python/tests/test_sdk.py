@@ -38,13 +38,29 @@ def test_get_cc_measurement_with_valid_input(vm_sdk, check_measurement):
 
 def test_get_cc_eventlog_with_invalid_input(vm_sdk):
     """Test get_cc_eventlog() function with invalid input."""
-    # calling get_cc_eventlog with count < 0
-    with pytest.raises(ValueError):
-        vm_sdk.get_cc_eventlog(start=1, count=-1)
+    event_num = vm_sdk.get_cc_eventlog().count
+    idx_min = 0
+    idx_max = event_num - 1
+    cnt_min = 1
+    cnt_max = event_num
 
-    # calling get_cc_eventlog with start < 1
+    # calling get_cc_eventlog with invalid "start"
     with pytest.raises(ValueError):
-        vm_sdk.get_cc_eventlog(start=0)
+        invalid_start = idx_min - 1
+        vm_sdk.get_cc_eventlog(start=invalid_start, count=1)
+    with pytest.raises(ValueError):
+        invalid_start = idx_max + 1
+        vm_sdk.get_cc_eventlog(start=invalid_start, count=1)
+
+    # calling get_cc_eventlog with invalid "count"
+    with pytest.raises(ValueError):
+        invalid_count = cnt_min - 1
+        vm_sdk.get_cc_eventlog(start=idx_min, count=invalid_count)
+    with pytest.raises(ValueError):
+        invalid_count = cnt_max + 1
+        vm_sdk.get_cc_eventlog(start=idx_min, count=invalid_count)
+    with pytest.raises(ValueError):
+        vm_sdk.get_cc_eventlog(start=idx_max, count=2)
 
 def test_get_cc_eventlog_with_valid_input(vm_sdk):
     """Test get_eventlog() funtion with valid input."""
