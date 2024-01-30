@@ -92,8 +92,6 @@ class EventLogs:
         parse_format: event log format used for parsing
     """
     spec_id_header_event = None
-    # Initiate the record number list for each index with default value 0
-    event_logs_record_number_list = [0] * 24
 
     def __init__(self, boot_time_data:bytes, runtime_data:bytes, parse_format:str=None) -> None:
         self._boot_time_data = boot_time_data
@@ -101,6 +99,8 @@ class EventLogs:
         self._event_logs = []
         self._count:int = 0
         self._parse_format:str = parse_format
+        # Initiate the record number list for each index with default value 0
+        self.event_logs_record_number_list = [0] * 24
 
     @property
     def event_logs(self):
@@ -152,18 +152,23 @@ class EventLogs:
         self._parse()
 
         if start is not None:
-            if not 0 < start <= self._count:
+            if start == self._count:
+                LOG.info("Input start equal to count. No more event log returned.")
+                self._event_logs = []
+                return
+
+            if not 0 <= start < self._count:
                 # pylint: disable-next=line-too-long
                 LOG.error("Invalid input start. Start must be number larger than 0 and smaller than total event log count.")
-                raise ValueError('Invalid parameter start.')
+                raise ValueError("Invalid parameter start.")
 
-            self._event_logs = self._event_logs[start-1:]
+            self._event_logs = self._event_logs[start:]
 
         if count is not None:
             if not 0 < count <= len(self._event_logs):
                 # pylint: disable-next=line-too-long
                 LOG.error("Invalid input count. count must be number larger than 0 and smaller than total event log count.")
-                raise ValueError('Invalid parameter count.')
+                raise ValueError("Invalid parameter count.")
 
             self._event_logs = self._event_logs[:count]
 
@@ -177,8 +182,8 @@ class EventLogs:
         Returns:
             The record number
         """
-        rec_num = EventLogs.event_logs_record_number_list[imr_index]
-        EventLogs.event_logs_record_number_list[imr_index] += 1
+        rec_num = self.event_logs_record_number_list[imr_index]
+        self.event_logs_record_number_list[imr_index] += 1
 
         return rec_num
 
@@ -409,8 +414,9 @@ class EventLogs:
         """
         measurement_dict = {}
         for event in self._event_logs:
-            # Skip TcgPcClientImrEvent during replay
-            if isinstance(event, TcgPcClientImrEvent):
+            # Skip EV_NO_ACTION event during replay as
+            # it will not result in a digest being extended into a PCR
+            if event.event_type == TcgEventType.EV_NO_ACTION:
                 continue
 
             # pylint: disable-next=consider-iterating-dictionary
