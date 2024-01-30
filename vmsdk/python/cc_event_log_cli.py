@@ -3,7 +3,10 @@ Command line to dump the cc event logs
 """
 import logging
 import argparse
-from cctrusted_vm import CCTrustedVmSdk
+import os
+from cctrusted_base.api import CCTrustedApi
+from cctrusted_vm.cvm import ConfidentialVM
+from cctrusted_vm.sdk import CCTrustedVmSdk
 
 
 LOG = logging.getLogger(__name__)
@@ -11,7 +14,14 @@ LOG = logging.getLogger(__name__)
 logging.basicConfig(level=logging.NOTSET, format='%(name)s %(levelname)-8s %(message)s')
 
 def main():
-    """example cc event log fetching utility"""
+    """Example cc event log fetching utility."""
+    if ConfidentialVM.detect_cc_type() == CCTrustedApi.TYPE_CC_NONE:
+        LOG.error("This is not a confidential VM!")
+        return
+    if os.geteuid() != 0:
+        LOG.error("Please run as root which is required for this example!")
+        return
+
     parser = argparse.ArgumentParser(
         description="The example utility to fetch CC event logs")
     parser.add_argument('-s', type=int,
