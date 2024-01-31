@@ -204,9 +204,10 @@ count = 5
 
 event_logs = CCTrustedVmSdk.inst().get_cc_eventlog(start, count)
     if event_logs is not None:
-        LOG.info("Total %d of event logs fetched.", len(event_logs.event_logs))
+        LOG.info("Total %d of event logs fetched.", len(event_logs))
         # Dump event as formatted
-        event_logs.dump(is_raw=false)
+        for event in event_logs:
+            event_logs.dump()
 ```
 
 Run [cc_event_log_cli.py](vmsdk/python/cc_event_log_cli.py) to execute the sample.
@@ -215,7 +216,7 @@ Run [cc_event_log_cli.py](vmsdk/python/cc_event_log_cli.py) to execute the sampl
 $ sudo su
 # source setupenv.sh
 # cd vmsdk/python
-# python3 cc_event_log_cli.py [-s <start_index_of_event_log>] [-c <count_of_event_logs>] [--out-format-raw <true/false>]
+# python3 cc_event_log_cli.py [-s <start_index_of_event_log>] [-c <count_of_event_logs>]
 ```
 
 Below is the description of the output of `get_cc_eventlog` API on Intel® TDX via VM SDK. Full event logs can be found in [API usage example](docs/API-usage-example.md).

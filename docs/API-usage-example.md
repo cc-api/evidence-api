@@ -151,7 +151,7 @@ Following are the boot-time event log collected by [VMSDK's sample code](/vmsdk/
 Please refer the event logs collected in container with runtime IMA part at [CCNP's sample output within Container](https://github.com/intel/confidential-cloud-native-primitives/blob/main/docs/sample-output-for-node-measurement-tool-full.txt)
 
 ```
-$ python3 vmsdk/python/cc_event_log_cli.py --out-format-raw false
+$ python3 vmsdk/python/cc_event_log_cli.py
 cctrusted_vm.cvm DEBUG    Successful open device node /dev/tdx_guest
 cctrusted_vm.cvm DEBUG    Successful read TDREPORT from /dev/tdx_guest.
 cctrusted_vm.cvm DEBUG    Successful parse TDREPORT.
