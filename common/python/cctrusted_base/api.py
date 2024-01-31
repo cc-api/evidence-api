@@ -16,11 +16,13 @@ class CCTrustedApi(ABC):
     """
 
     TYPE_CC_NONE = -1
-    TYPE_CC_TDX = 0
-    TYPE_CC_SEV = 1
-    TYPE_CC_CCA = 2
+    TYPE_CC_TPM = 0
+    TYPE_CC_TDX = 1
+    TYPE_CC_SEV = 2
+    TYPE_CC_CCA = 3
 
     TYPE_CC_STRING = {
+        TYPE_CC_TPM: "TPM",
         TYPE_CC_TDX: "TDX",
         TYPE_CC_SEV: "SEV",
         TYPE_CC_CCA: "CCA"
