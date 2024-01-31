@@ -11,6 +11,9 @@ from cctrusted_vm.cvm import ConfidentialVM
 from cctrusted_vm.sdk import CCTrustedVmSdk
 
 LOG = logging.getLogger(__name__)
+
+logging.basicConfig(level=logging.NOTSET, format="%(name)s %(levelname)-8s %(message)s")
+
 OUT_FORMAT_RAW = "raw"
 OUT_FORMAT_HUMAN = "human"
 
@@ -69,11 +72,6 @@ def main():
         type=out_format_validator
     )
     args = parser.parse_args()
-
-    logging.basicConfig(
-        level=logging.NOTSET,
-        format="%(name)s %(levelname)-8s %(message)s"
-    )
 
     nonce = make_nounce()
     LOG.info("demo random number in base64: %s", nonce.decode("utf-8"))
