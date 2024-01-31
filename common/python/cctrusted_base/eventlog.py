@@ -401,9 +401,13 @@ class EventLogs:
                            TcgEventType.IMA_MEASUREMENT_EVENT, digests,
                            event_size, event, extra_info)
 
-    def replay(self) -> dict:
+    @staticmethod
+    def replay(event_logs:list) -> dict:
         """
         Replay event logs by IMR index.
+
+        Args:
+            event_logs(list): a list of parsed event logs to replay
 
         Returns:
             A dictionary containing the replay result displayed by IMR index and hash algorithm. 
@@ -413,7 +417,12 @@ class EventLogs:
                 { 0: { 12: <measurement_replayed>}}
         """
         measurement_dict = {}
-        for event in self._event_logs:
+        for event in event_logs:
+            # Check event format before replay, skip event if using unknown format
+            if not isinstance(event, (TcgImrEvent, TcgPcClientImrEvent)):
+                LOG.error("Event with unknown format. Skip this one...")
+                continue
+
             # Skip EV_NO_ACTION event during replay as
             # it will not result in a digest being extended into a PCR
             if event.event_type == TcgEventType.EV_NO_ACTION:
