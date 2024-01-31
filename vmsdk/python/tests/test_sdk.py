@@ -1,8 +1,7 @@
 """Containing unit test cases for sdk class"""
 
 from cctrusted_base.ccreport import CcReport, CcReportData, CcReportSignature
-from cctrusted_base.eventlog import EventLogs
-from cctrusted_base.tcg import TcgEfiSpecIdEvent, TcgImrEvent, TcgPcClientImrEvent
+from cctrusted_base.tcg import TcgImrEvent, TcgPcClientImrEvent
 import pytest
 
 def test_get_default_algorithms(vm_sdk, default_alg_id):
@@ -42,7 +41,7 @@ def test_get_cc_eventlog_with_invalid_input(vm_sdk):
     The test logic currently has an assumption that the return result of get_cc_eventlog
     doesn't change if the input parameters are the same within a short period of time.
     """
-    event_num = len(vm_sdk.get_cc_eventlog().event_logs)
+    event_num = len(vm_sdk.get_cc_eventlog())
     idx_min = 0
     idx_max = event_num - 1
     cnt_min = 1
@@ -58,7 +57,7 @@ def test_get_cc_eventlog_with_invalid_input(vm_sdk):
     # a special case works as current design
     invalid_start = idx_max + 1
     eventlog = vm_sdk.get_cc_eventlog(start=invalid_start, count=1)
-    assert len(eventlog.event_logs) == 0
+    assert len(eventlog) == 0
 
     # calling get_cc_eventlog with invalid "count"
     with pytest.raises(ValueError):
@@ -78,15 +77,11 @@ def test_get_cc_eventlog_with_valid_input(vm_sdk):
     assert eventlog is not None
 
     # Check 2: the object type should be correct.
-    assert isinstance(eventlog, EventLogs)
-    logs = eventlog.event_logs
-    assert logs is not None
-    assert isinstance(logs, list)
+    assert isinstance(eventlog, list)
     event_count = 0
-    for e in logs:
+    for e in eventlog:
         event_count += 1
-        assert isinstance(e, (TcgImrEvent, TcgPcClientImrEvent, TcgEfiSpecIdEvent))
-    assert event_count == eventlog.count
+        assert isinstance(e, (TcgImrEvent, TcgPcClientImrEvent))
 
 def test_get_cc_report_with_valid_input(vm_sdk, check_quote_valid_input):
     """Test get_cc_report() function with valid input."""

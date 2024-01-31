@@ -21,7 +21,7 @@ def _replay_eventlog():
     rtmr_len = TdxRTMR.RTMR_LENGTH_BY_BYTES
     rtmr_cnt = TdxRTMR.RTMR_COUNT
     rtmrs = [bytearray(rtmr_len)] * rtmr_cnt
-    event_logs = CCTrustedVmSdk.inst().get_cc_eventlog().event_logs
+    event_logs = CCTrustedVmSdk.inst().get_cc_eventlog()
     assert event_logs is not None
     for event in event_logs:
         if event.event_type != TcgEventType.EV_NO_ACTION:
@@ -249,10 +249,10 @@ def tdx_check_replay_eventlog_with_invalid_input():
 
     # Check the replay result should be None when input None.
     replay_result = CCTrustedVmSdk.inst().replay_cc_eventlog(None)
-    assert replay_result is None
+    assert replay_result == {}
 
     # Check the replay result when input invalid eventlog.
     invalid_eventlog = _gen_invalid_eventlog()
-    replay_result = CCTrustedVmSdk.inst().replay_cc_eventlog(invalid_eventlog)
+    replay_result = CCTrustedVmSdk.inst().replay_cc_eventlog(invalid_eventlog.event_logs)
     assert replay_result is not None
     assert 0 == len(replay_result)
