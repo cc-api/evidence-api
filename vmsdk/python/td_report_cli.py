@@ -10,7 +10,7 @@ from cctrusted_vm.tdx import CCTrustedTdvmSdk
 
 LOG = logging.getLogger(__name__)
 
-logging.basicConfig(level=logging.NOTSET, format='%(message)s')
+logging.basicConfig(level=logging.NOTSET, format="%(name)s %(levelname)-8s %(message)s")
 
 def main():
     """Example to call get_tdreport and dump the result to stdout."""
