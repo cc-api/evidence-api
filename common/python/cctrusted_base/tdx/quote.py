@@ -648,7 +648,7 @@ class TdxQuote(CcReport):
     TODO: implement version 5 according to A.4. Version 5 Quote Format.
     """
 
-    def __init__(self, data: bytearray, cc_type):
+    def __init__(self, data: bytearray):
         """Initialize attributes according to spec.
 
         It saves raw data in the attribute of its super class and parses
@@ -657,7 +657,7 @@ class TdxQuote(CcReport):
         Args:
             data: A bytearray of the raw data.
         """
-        super().__init__(data, cc_type)
+        super().__init__(data, CCTrustedApi.TYPE_CC_TDX)
         v = memoryview(self.data)
         self.header = TdxQuoteHeader(v[0:48].tobytes())
         version = self.header.ver
@@ -978,4 +978,4 @@ class TdxQuoteReq15(TdxQuoteReq):
             An instance of ``TdxQuote``.
         """
         tdquote_bytes = self.get_tdquote_bytes_from_req(rawdata)
-        return TdxQuote(tdquote_bytes, CCTrustedApi.TYPE_CC_TDX)
+        return TdxQuote(tdquote_bytes)
