@@ -74,6 +74,11 @@ pub enum QeCertDataType {
 pub const TDX_QUOTE_VERSION_4: u16 = 4;
 pub const TDX_QUOTE_VERSION_5: u16 = 5;
 
-pub const ACPI_TABLE_FILE: &str = "/sys/firmware/acpi/tables/CCEL";
-pub const ACPI_TABLE_DATA_FILE: &str = "/sys/firmware/acpi/tables/data/CCEL";
-pub const IMA_DATA_FILE: &str = "/sys/kernel/security/integrity/ima/ascii_runtime_measurements";
+pub const ACPI_TABLE_FILE_VM: &str = "/sys/firmware/acpi/tables/CCEL";
+pub const ACPI_TABLE_DATA_FILE_VM: &str = "/sys/firmware/acpi/tables/data/CCEL";
+pub const IMA_DATA_FILE_VM: &str = "/sys/kernel/security/integrity/ima/ascii_runtime_measurements";
+
+pub const ACPI_TABLE_FILE_CONTAINER: &str = "/run/firmware/acpi/tables/CCEL";
+pub const ACPI_TABLE_DATA_FILE_CONTAINER: &str = "/run/firmware/acpi/tables/data/CCEL";
+pub const IMA_DATA_FILE_CONTAINER: &str =
+    "/run/kernel/security/integrity/ima/ascii_runtime_measurements";

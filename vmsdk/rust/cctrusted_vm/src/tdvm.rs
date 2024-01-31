@@ -379,22 +379,38 @@ impl CVM for TdxVM {
         start: Option<u32>,
         count: Option<u32>,
     ) -> Result<Vec<EventLogEntry>, anyhow::Error> {
-        if !Path::new(ACPI_TABLE_FILE).exists() {
-            return Err(anyhow!(
-                "[process_cc_eventlog] Failed to find TDX CCEL table at {:?}",
-                ACPI_TABLE_FILE
-            ));
+        let (acpi_table_file, acpi_table_data_file, ima_data_file);
+
+        if !Path::new(ACPI_TABLE_FILE_VM).exists() {
+            if !Path::new(ACPI_TABLE_FILE_CONTAINER).exists() {
+                return Err(anyhow!(
+                    "[process_cc_eventlog] Failed to find TDX CCEL table file at {:?} or {:?}",
+                    ACPI_TABLE_FILE_VM,
+                    ACPI_TABLE_FILE_CONTAINER
+                ));
+            } else {
+                acpi_table_file = ACPI_TABLE_FILE_CONTAINER.to_string();
+            }
+        } else {
+            acpi_table_file = ACPI_TABLE_FILE_VM.to_string();
         }
 
-        if !Path::new(ACPI_TABLE_DATA_FILE).exists() {
-            return Err(anyhow!(
-                "[process_cc_eventlog] Failed to find TDX CCEL data file at {:?}",
-                ACPI_TABLE_DATA_FILE
-            ));
+        if !Path::new(ACPI_TABLE_DATA_FILE_VM).exists() {
+            if !Path::new(ACPI_TABLE_DATA_FILE_CONTAINER).exists() {
+                return Err(anyhow!(
+                    "[process_cc_eventlog] Failed to find TDX CCEL table data at {:?} or {:?}",
+                    ACPI_TABLE_DATA_FILE_VM,
+                    ACPI_TABLE_DATA_FILE_CONTAINER
+                ));
+            } else {
+                acpi_table_data_file = ACPI_TABLE_DATA_FILE_CONTAINER.to_string();
+            }
+        } else {
+            acpi_table_data_file = ACPI_TABLE_DATA_FILE_VM.to_string();
         }
 
         // read ACPI data
-        let ccel_file = File::open(ACPI_TABLE_FILE)?;
+        let ccel_file = File::open(acpi_table_file)?;
         let mut ccel_reader = BufReader::new(ccel_file);
         let mut ccel = Vec::new();
         ccel_reader.read_to_end(&mut ccel)?;
@@ -404,7 +420,7 @@ impl CVM for TdxVM {
             return Err(anyhow!("[process_cc_eventlog] Invalid CCEL table"));
         }
 
-        let boot_time_data_file = File::open(ACPI_TABLE_DATA_FILE)?;
+        let boot_time_data_file = File::open(acpi_table_data_file)?;
         let mut boot_time_data_reader = BufReader::new(boot_time_data_file);
         let mut boot_time_data = Vec::new();
         boot_time_data_reader.read_to_end(&mut boot_time_data)?;
@@ -416,6 +432,21 @@ impl CVM for TdxVM {
           https://github.com/intel/tdx-tools/blob/tdx-1.5/build/common/patches-tdx-kernel-MVP-KERNEL-6.2.16-v5.0.tar.gz)
           If not, suppose IMA over RTMR not enabled in kernel
         */
+
+        if !Path::new(IMA_DATA_FILE_VM).exists() {
+            if !Path::new(IMA_DATA_FILE_CONTAINER).exists() {
+                return Err(anyhow!(
+                    "[process_cc_eventlog] Failed to find TDX CCEL table data at {:?} or {:?}",
+                    IMA_DATA_FILE_VM,
+                    IMA_DATA_FILE_CONTAINER
+                ));
+            } else {
+                ima_data_file = IMA_DATA_FILE_CONTAINER.to_string();
+            }
+        } else {
+            ima_data_file = IMA_DATA_FILE_VM.to_string();
+        }
+
         let mut run_time_data = Vec::new();
 
         let cmdline_file = File::open("/proc/cmdline")?;
@@ -423,7 +454,7 @@ impl CVM for TdxVM {
         let mut cmdline_string = String::new();
         let _ = cmdline_reader.read_to_string(&mut cmdline_string);
         if cmdline_string.contains("ima_hash=sha384") {
-            run_time_data = read_to_string(IMA_DATA_FILE)
+            run_time_data = read_to_string(ima_data_file)
                 .unwrap()
                 .lines()
                 .map(String::from)
