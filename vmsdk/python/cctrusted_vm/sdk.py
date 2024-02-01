@@ -98,9 +98,9 @@ class CCTrustedVmSdk(CCTrustedApi):
         data: bytearray = None,
         extraArgs = None
     ) -> CcReport:
-        """Get the quote for given nonce and data.
+        """Get the CcReport (i.e. quote) for given nonce and data.
 
-        The quote is signing of attestation data (IMR values or hashes of IMR
+        The CcReport is signing of attestation data (IMR values or hashes of IMR
         values), made by a trusted foundation (TPM) using a key trusted by the
         verifier.
 
@@ -112,7 +112,7 @@ class CCTrustedVmSdk(CCTrustedApi):
             extraArgs: for TPM, it will be given list of IMR/PCRs
 
         Returns:
-            The ``Quote`` object.
+            The ``CcReport`` object. Return None if it fails.
         """
         return self._cvm.get_cc_report(nonce, data, extraArgs)
 
