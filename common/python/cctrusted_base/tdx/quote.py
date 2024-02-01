@@ -122,6 +122,7 @@ class TdxQuoteHeader(BinaryBlob):
         self.reserved_1 = v[8:10].tobytes()
         self.reserved_2 = v[10:12].tobytes()
         self.qe_vendor = v[12:28].tobytes()
+        self.user_data = v[28:].tobytes()
 
     def dump(self, fmt=DUMP_FORMAT_RAW, indent=""):
         """Dump data.
@@ -138,14 +139,15 @@ class TdxQuoteHeader(BinaryBlob):
             info(f'{i}Header Version: {self.ver}')
             info(f'{i}Attestation Key Type: {self.ak_type}')
             info(f'{i}TEE Type: {self.tee_type}')
-            info(f'{i}Reserved 1: {self.reserved_1.hex()}')
-            info(f'{i}Reserved 2: {self.reserved_2.hex()}')
+            info(f'{i}Reserved 1: 0x{self.reserved_1.hex()}')
+            info(f'{i}Reserved 2: 0x{self.reserved_2.hex()}')
             qe_vendor_name = ""
             if QE_VENDOR_INTEL_SGX == self.qe_vendor.hex():
                 # This is the only defined QE Vendor so far according to the spec
                 # The link to the spec is given in the docstring of TdxQuoteHeader.
                 qe_vendor_name = " # Intel® SGX QE Vendor"
-            info(f'{i}QE Vendor ID: {self.qe_vendor.hex()}{qe_vendor_name}')
+            info(f'{i}QE Vendor ID: 0x{self.qe_vendor.hex()}{qe_vendor_name}')
+            info(f'{i}User Data: 0x{self.user_data.hex()}')
         else:
             # Default output raw data in hex string
             super().dump()
@@ -886,7 +888,7 @@ class TdxQuoteReq15(TdxQuoteReq):
         reqbuf = struct.pack("QQ", ctypes.addressof(self.tdquote), TdxQuoteReq15.TDX_QUOTE_LEN)
         return reqbuf
 
-    def qgs_msg_quote_resp(self, buf):
+    def qgs_msg_quote_resp(self, buf) -> bytes:
         """Get Quote from the response of QGS messages.
 
         Args:
@@ -920,14 +922,14 @@ class TdxQuoteReq15(TdxQuoteReq):
             return None
         return quote[:quote_size]
 
-    def get_tdquote_bytes_from_req(self, req):
+    def get_tdquote_bytes_from_req(self, req) -> bytes:
         """Get the TD Quote in bytes format from the tdx_quote_req struct.
 
         Args:
             req: Bytes of the request struct "tdx_quote_req".
 
         Returns:
-            Bytes of TD Quote data.
+            Bytes of TD Quote data. None if it fails.
 
         References:
         Kernel source in include/uapi/linux/tdx-guest.h:
@@ -960,7 +962,13 @@ class TdxQuoteReq15(TdxQuoteReq):
         #       Data offset (bytes) is 24
         #       Data length is "Size of shared GPA - 24"
         data_len = buf_len - 24
-        _, _, _, out_len, data = struct.unpack(f"QQII{data_len}s", buf)
+        _, status_code, _, out_len, data = struct.unpack(f"QQII{data_len}s", buf)
+        if status_code != 0:
+            # https://cdrdv2.intel.com/v1/dl/getContent/726792
+            # Intel TDX Guest-Hypervisor Communication Interface v1.5
+            #   Table 3-11: TDG.VP.VMCALL<GetQuote> - GetQuote Status Code
+            LOG.error("Fail to get quote! Status Code: 0x%x", status_code)
+            return None
         data_len = int.from_bytes(data[:4], "big")
         if data_len != out_len - 4:
             LOG.error("TD Quote data length sanity check failed")
@@ -975,7 +983,9 @@ class TdxQuoteReq15(TdxQuoteReq):
             rawdata: A bytearray storing the response data from IOCTL.
 
         Returns:
-            An instance of ``TdxQuote``.
+            An instance of ``TdxQuote``. Return None if it fails.
         """
         tdquote_bytes = self.get_tdquote_bytes_from_req(rawdata)
+        if tdquote_bytes is None:
+            return None
         return TdxQuote(tdquote_bytes)
