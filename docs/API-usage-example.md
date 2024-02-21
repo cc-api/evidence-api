@@ -148,7 +148,7 @@ cctrusted_base.binaryblob INFO     000010E0  2D 2D 0A 00                        
 ## Dump the event log
 
 Following are the boot-time event log collected by [VMSDK's sample code](/vmsdk/python/cc_event_log_cli.py).
-Please refer the event logs collected in container with runtime IMA part at [CCNP's sample output within Container](https://github.com/intel/confidential-cloud-native-primitives/blob/main/docs/sample-output-for-node-measurement-tool-full.txt)
+Please refer the event logs collected in container with runtime IMA part at [CCNP's sample output within Container](https://github.com/cc-api/confidential-cloud-native-primitives/blob/main/docs/sample-output-for-node-measurement-tool-full.txt)
 
 ```
 $ python3 vmsdk/python/cc_event_log_cli.py
