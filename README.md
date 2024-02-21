@@ -26,7 +26,7 @@ event log follows the below specifications.
 | Firmware | EFI_CC_MEASUREMENT_PROTOCOL </br> CCEL ACPI Table </br> EFI_TCG2_PROTOCOL </br> TCG ACPI Table | [UEFI Specification 2.10](https://uefi.org/specs/UEFI/2.10/38_Confidential_Computing.html#virtual-platform-cc-event-log) </br> [ACPI Specification 6.5](https://uefi.org/specs/ACPI/6.5/05_ACPI_Software_Programming_Model.html#cc-event-log-acpi-table) </br> [TCG EFI Protocol Specification](https://trustedcomputinggroup.org/resource/tcg-efi-protocol-specification/) </br> [TCG ACPI Specification](https://trustedcomputinggroup.org/resource/tcg-acpi-specification/) |
 | Boot Loader | EFI_CC_MEASUREMENT_PROTOCOL </br> EFI_TCG2_PROTOCOL | Grub2/Shim |
 | OS | Integrity Measurement Architecture (IMA) | [Specification](https://sourceforge.net/p/linux-ima/wiki/Home/) |
-| Cloud Native | Confidential Cloud Native Primitives (CCNP) | [Repository](https://github.com/intel/confidential-cloud-native-primitives) |
+| Cloud Native | Confidential Cloud Native Primitives (CCNP) | [Repository](https://github.com/cc-api/confidential-cloud-native-primitives) |
 
 ## 2. Trusted Foundation
 
@@ -64,7 +64,7 @@ Choose correct SDK according to your environment. Installation guide can be foun
 | --- | --------------- | -- |
 | Firmware SDK | Firmware Application | |
 | [VM SDK](https://github.com/cc-api/cc-trusted-api/tree/main/vmsdk) | Confidential Virtual Machine | [Guide](vmsdk/README.md) |
-| [Confidential Cloud Native Primitives (CCNP)](https://github.com/intel/confidential-cloud-native-primitives) | Confidential Cluster/Container | [Guide](https://github.com/intel/confidential-cloud-native-primitives/blob/main/deployment/README.md) |
+| [Confidential Cloud Native Primitives (CCNP)](https://github.com/cc-api/confidential-cloud-native-primitives) | Confidential Cluster/Container | [Guide](https://github.com/cc-api/confidential-cloud-native-primitives/blob/main/deployment/README.md) |
 
 ## 5. How to use the APIs
 
@@ -192,7 +192,7 @@ cctrusted_base.binaryblob INFO     000010E0  2D 2D 0A 00                        
 
 ### 5.3 Sample of `get_cc_eventlog` API
 
-Below example code collects all boot time event logs on the platform using API `get_cc_eventlog` implemented in `VMSDK` in python. Sample Event logs collected within container using `CCNP` API can be found [here](https://github.com/intel/confidential-cloud-native-primitives/blob/main/docs/sample-output-for-node-measurement-tool-full.txt).
+Below example code collects all boot time event logs on the platform using API `get_cc_eventlog` implemented in `VMSDK` in python. Sample Event logs collected within container using `CCNP` API can be found [here](https://github.com/cc-api/confidential-cloud-native-primitives/blob/main/docs/sample-output-for-node-measurement-tool-full.txt).
 
 ```
 from cctrusted import CCTrustedVmSdk
