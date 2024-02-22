@@ -1,0 +1,25 @@
+name: VMSDK Rust Test
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'vmsdk/rust/**/*'
+  pull_request:
+    paths:
+      - 'vmsdk/rust/**/*'
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  vmsdk_rust_test:
+    runs-on: [self-hosted, tdx-guest]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run tests
+        run: |
+          cd vmsdk/rust/cctrusted_vm/
+          cargo test --verbose
