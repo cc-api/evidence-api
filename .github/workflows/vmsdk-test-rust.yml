@@ -18,8 +18,16 @@ jobs:
   vmsdk_rust_test:
     runs-on: [self-hosted, tdx-guest]
     steps:
+      - name: Clean up intermediate files
+        continue-on-error: true
+        run: |
+          # Remove the intermediate files that could be left
+          # by previous run with sudo. Otherwise, the checkout
+          # will fail with permission issue.
+          sudo rm -f vmsdk/rust/cctrusted_vm/Cargo.lock
+          sudo rm -fr vmsdk/rust/cctrusted_vm/target
       - uses: actions/checkout@v3
       - name: Run tests
         run: |
           cd vmsdk/rust/cctrusted_vm/
-          cargo test --verbose
+          sudo bash -c "export CARGO_TERM_COLOR=always && cargo test --verbose"
