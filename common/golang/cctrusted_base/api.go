@@ -29,7 +29,7 @@ func (t CC_Type) String() string {
 type CCTrustedAPI interface {
 	GetDefaultAlgorithm() TCG_ALG
 
-	GetCCReport(nonce, userData string) (Report, error)
+	GetCCReport(nonce, userData string, extraArgs any) (Report, error)
 	DumpCCReport(reportBytes []byte) error
 
 	GetMeasurementCount() (int, error)
