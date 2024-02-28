@@ -56,3 +56,5 @@ __pycache__/
 venv/
 dist/
 *.egg-info/
+
+!common/golang/go.mod
