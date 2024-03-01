@@ -57,4 +57,4 @@ venv/
 dist/
 *.egg-info/
 
-!common/golang/go.mod
+!common/golang/cctrusted_base/go.mod
