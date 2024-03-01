@@ -82,3 +82,4 @@ pub const ACPI_TABLE_FILE_CONTAINER: &str = "/run/firmware/acpi/tables/CCEL";
 pub const ACPI_TABLE_DATA_FILE_CONTAINER: &str = "/run/firmware/acpi/tables/data/CCEL";
 pub const IMA_DATA_FILE_CONTAINER: &str =
     "/run/kernel/security/integrity/ima/ascii_runtime_measurements";
+pub const ATTEST_CFG_FILE_PATH: &str = "/etc/tdx-attest.conf";
