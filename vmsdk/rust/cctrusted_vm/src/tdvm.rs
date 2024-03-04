@@ -469,7 +469,7 @@ impl CVM for TdxVM {
         &self,
         eventlogs: Vec<EventLogEntry>,
     ) -> Result<Vec<ReplayResult>, anyhow::Error> {
-        EventLogs::replay(eventlogs)
+        EventLogs::replay(eventlogs, TdxRTMR::max_index().into())
     }
 
     // CVM trait function: retrive CVM type

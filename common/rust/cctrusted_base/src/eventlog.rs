@@ -509,7 +509,10 @@ impl EventLogs {
                    1: { 12: <measurement_replayed>},
                ]
     */
-    pub fn replay(eventlogs: Vec<EventLogEntry>) -> Result<Vec<ReplayResult>, anyhow::Error> {
+    pub fn replay(
+        eventlogs: Vec<EventLogEntry>,
+        imr_idx_max: u32,
+    ) -> Result<Vec<ReplayResult>, anyhow::Error> {
         let mut replay_results: Vec<ReplayResult> = Vec::new();
 
         for event_log in eventlogs {
@@ -519,6 +522,9 @@ impl EventLogs {
                         continue;
                     }
                     let imr_index = tcg_imr_event.imr_index;
+                    if imr_index > imr_idx_max {
+                        return Err(anyhow!("imr_index {} out of range", imr_index));
+                    }
                     for digest in tcg_imr_event.digests {
                         let algo_id = digest.algo_id;
                         let hash = digest.hash;
