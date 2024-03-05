@@ -7,17 +7,37 @@ on:
     paths:
       - 'vmsdk/**/*.py'
       - 'common/**/*.py'
+      - 'setupenv.sh'
+      - '.github/workflows/vmsdk-test-python.yaml'
   pull_request:
     paths:
       - 'vmsdk/**/*.py'
       - 'common/**/*.py'
+      - 'setupenv.sh'
+      - '.github/workflows/vmsdk-test-python.yaml'
   workflow_dispatch:
+
+env:
+  VMSDK_PYTEST_DIR: 'vmsdk_pytest'
 
 jobs:
   vmsdk_pytest:
     runs-on: [self-hosted, tdx-guest]
+    defaults:
+      run:
+        working-directory: ${{env.VMSDK_PYTEST_DIR}}
     steps:
-      - uses: actions/checkout@v3
+      - name: Clean up intermediate files
+        continue-on-error: true
+        run: |
+          # Remove the intermediate files that could be left
+          # by previous run with sudo. Otherwise, the checkout
+          # will fail with permission issue.
+          sudo rm -fr ./*
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          path: ${{env.VMSDK_PYTEST_DIR}}
       - name: Run PyTest for VMSDK
         run: |
           set -ex

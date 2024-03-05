@@ -6,17 +6,23 @@ on:
       - main
     paths:
       - 'vmsdk/rust/**/*'
+      - '.github/workflows/vmsdk-test-rust.yaml'
   pull_request:
     paths:
       - 'vmsdk/rust/**/*'
+      - '.github/workflows/vmsdk-test-rust.yaml'
   workflow_dispatch:
 
 env:
   CARGO_TERM_COLOR: always
+  VMSDK_RUST_TEST_DIR: vmsdk_rust_test
 
 jobs:
   vmsdk_rust_test:
     runs-on: [self-hosted, tdx-guest]
+    defaults:
+      run:
+        working-directory: ${{env.VMSDK_RUST_TEST_DIR}}
     steps:
       - name: Clean up intermediate files
         continue-on-error: true
@@ -26,7 +32,10 @@ jobs:
           # will fail with permission issue.
           sudo rm -f vmsdk/rust/cctrusted_vm/Cargo.lock
           sudo rm -fr vmsdk/rust/cctrusted_vm/target
-      - uses: actions/checkout@v3
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          path: ${{env.VMSDK_RUST_TEST_DIR}}
       - name: Run tests
         run: |
           cd vmsdk/rust/cctrusted_vm/

@@ -2,6 +2,7 @@
 
 from cctrusted_base.ccreport import CcReport, CcReportData, CcReportSignature
 from cctrusted_base.tcg import TcgImrEvent, TcgPcClientImrEvent
+from cctrusted_base.tcgcel import TcgTpmsCelEvent
 import pytest
 
 def test_get_default_algorithms(vm_sdk, default_alg_id):
@@ -81,7 +82,7 @@ def test_get_cc_eventlog_with_valid_input(vm_sdk):
     event_count = 0
     for e in eventlog:
         event_count += 1
-        assert isinstance(e, (TcgImrEvent, TcgPcClientImrEvent))
+        assert isinstance(e, (TcgImrEvent, TcgPcClientImrEvent, TcgTpmsCelEvent))
 
 def test_get_cc_report_with_valid_input(vm_sdk, check_quote_valid_input):
     """Test get_cc_report() function with valid input."""
