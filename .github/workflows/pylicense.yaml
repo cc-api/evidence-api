@@ -4,7 +4,6 @@ on:
   pull_request:
     paths:
     - 'common/python/**'
-    - 'vmsdk/python/**'
   workflow_dispatch:
 
 jobs:

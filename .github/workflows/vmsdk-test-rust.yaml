@@ -1,0 +1,49 @@
+name: VMSDK Rust Test
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/vmsdk-test-rust.yaml'
+  pull_request:
+    paths:
+      - '.github/workflows/vmsdk-test-rust.yaml'
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+  VMSDK_RUST_TEST_DIR: 'vmsdk_rust_test'
+  VMSDK_DIR: 'cc-trusted-vmsdk'
+
+jobs:
+  vmsdk_rust_test:
+    runs-on: [self-hosted, tdx-guest]
+    defaults:
+      run:
+        working-directory: ${{env.VMSDK_RUST_TEST_DIR}}
+    steps:
+      - name: Clean up intermediate files
+        continue-on-error: true
+        run: |
+          # Remove the intermediate files that could be left
+          # by previous run with sudo. Otherwise, the checkout
+          # will fail with permission issue.
+          sudo rm -fr ./*
+      - name: Checkout cc-trusted-api repo
+        uses: actions/checkout@v4
+        with:
+          path: ${{env.VMSDK_RUST_TEST_DIR}}
+      - name: Checkout cc-trusted-vmsdk repo
+        uses: actions/checkout@v4
+        with:
+          repository: cc-api/cc-trusted-vmsdk
+          path: ${{env.VMSDK_RUST_TEST_DIR}}/${{env.VMSDK_DIR}}
+      - name: Run tests
+        run: |
+          cd ${{env.VMSDK_DIR}}/src/rust/cctrusted_vm
+          # The trick here is to override the dependencies with local version.
+          echo "" >> Cargo.toml
+          echo "[patch.crates-io]" >> Cargo.toml
+          echo 'cctrusted_base = { path = "../../../../common/rust/cctrusted_base" }' >> Cargo.toml
+          sudo bash -c "export CARGO_TERM_COLOR=always && cargo test --verbose"
