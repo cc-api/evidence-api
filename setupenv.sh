@@ -3,4 +3,4 @@
 CURR_DIR=$(pwd)
 
 # setup PYTHONPATH
-export PYTHONPATH=$PYTHONPATH:$CURR_DIR/common/python/:$CURR_DIR/vmsdk/python
+export PYTHONPATH=$PYTHONPATH:$CURR_DIR/common/python/
