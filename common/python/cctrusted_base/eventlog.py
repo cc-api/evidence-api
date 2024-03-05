@@ -12,6 +12,10 @@ from cctrusted_base.tcg import TcgEfiSpecIdEvent
 from cctrusted_base.tcg import TcgImrEvent
 from cctrusted_base.tcg import TcgEfiSpecIdEventAlgorithmSize
 from cctrusted_base.tcg import TcgPcClientImrEvent
+from cctrusted_base.tcgcel import TcgTpmsCelEvent
+from cctrusted_base.tcgcel import TcgCelTypes
+from cctrusted_base.tcgcel import TcgTpmsEventPcClientStd
+from cctrusted_base.tcgcel import TcgTpmsEventImaTemplate
 
 
 LOG = logging.getLogger(__name__)
@@ -35,8 +39,10 @@ class TcgEventLog:
         extra_info: extra information in the event
     """
 
-    TCG_PCCLIENT_FORMAT = "tcg_pcclient"
-    TCG_CANONICAL_FORMAT = "tcg_canonical"
+    TCG_FORMAT_PCCLIENT = 0
+    TCG_FORMAT_CEL_TLV = 1
+    TCG_FORMAT_CEL_JSON = 2
+    TCG_FORMAT_CEL_CBOR = 3
 
     def __init__(self, rec_num:int, imr_index:int, event_type:TcgEventType, digests:list[TcgDigest],
                  event_size:int, event:bytes, extra_info=None) -> None:
@@ -50,11 +56,12 @@ class TcgEventLog:
 
     def format_event_log(self, parse_format:str):
         """Format the event log into differen format."""
-        if parse_format == TcgEventLog.TCG_PCCLIENT_FORMAT:
+        if parse_format == self.TCG_FORMAT_PCCLIENT:
             return self._to_tcg_pcclient_format()
 
-        if parse_format == TcgEventLog.TCG_CANONICAL_FORMAT:
-            return self._to_tcg_canonical_format()
+        if parse_format in (self.TCG_FORMAT_CEL_JSON, self.TCG_FORMAT_CEL_CBOR,
+                            self.TCG_FORMAT_CEL_TLV) :
+            return self._to_tcg_canonical_format(parse_format)
 
         return None
 
@@ -72,12 +79,30 @@ class TcgEventLog:
         return TcgImrEvent(self._imr_index, self._event_type, self._digests, self._event_size,
                                self._event)
 
-    def _to_tcg_canonical_format(self):
+    def _to_tcg_canonical_format(self, encoding:str=None):
         """The function to convert event log data into event log following
            Canonical Eventlog Spec.
         """
-        return NotImplementedError
 
+        # Determine content type and construct data according to event type.
+        # Now only consider PCClient events and IMA events
+        if self._event_type == TcgEventType.IMA_MEASUREMENT_EVENT:
+            content_type = TcgCelTypes.CEL_IMA_TEMPLATE
+            content_data = TcgTpmsEventImaTemplate(self._event,
+                                                   self._extra_info["template_name"])
+        else:
+            content_type = TcgCelTypes.CEL_PCCLIENT_STD
+            content_data = TcgTpmsEventPcClientStd(self._event_type, self._event)
+
+        event = TcgTpmsCelEvent(self._rec_num,
+                                self._digests,
+                                content_type,
+                                self._imr_index,
+                                None,
+                                content_data)
+
+        # switch encoding according to user input
+        return TcgTpmsCelEvent.encode(event, encoding)
 
 class EventLogs:
     """EventLogs class.
@@ -225,7 +250,8 @@ class EventLogs:
 
         for event in self._runtime_data.splitlines():
             event_log = self._parse_ima_event_log(event)
-            self._event_logs.append(event_log.format_event_log(self._parse_format))
+            self._event_logs.append(
+                event_log.format_event_log(TcgEventLog.TCG_FORMAT_CEL_TLV))
             self._count += 1
 
     def _parse_spec_id_event_log(self, data:bytes) -> (TcgEventLog, int):
@@ -419,20 +445,48 @@ class EventLogs:
         measurement_dict = {}
         for event in event_logs:
             # Check event format before replay, skip event if using unknown format
-            if not isinstance(event, (TcgImrEvent, TcgPcClientImrEvent)):
+            if not isinstance(event, (TcgImrEvent, TcgPcClientImrEvent, TcgTpmsCelEvent)):
                 LOG.error("Event with unknown format. Skip this one...")
                 continue
 
+            # TODO: consider CEL-JSON/CEL-CBOR encoding later
+            # extract common attributes from different formats, only consider TLV encoding for now
+            if isinstance(event, TcgTpmsCelEvent):
+                content_type = event.content.type
+                # Align the Canonical types with TCG PCClient Event types
+                match content_type:
+                    case TcgCelTypes.CEL_IMA_TEMPLATE:
+                        event_type = TcgEventType.IMA_MEASUREMENT_EVENT
+                    case TcgCelTypes.CEL_PCCLIENT_STD:
+                        # For PCClient_STD event,
+                        # the event type is store within the content attribute
+                        event_type = event.content.value[0].value
+
+                # TODO: consider the NV_INDEX case later
+                imr_index = event.index.value
+
+                digests = []
+                for d in event.digests.value:
+                    digests.append(TcgDigest(d.type, d.value))
+            else:
+                event_type = event.event_type
+                # Skip EV_NO_ACTION event during replay as
+                # it will not result in a digest being extended into a PCR
+                if event_type == TcgEventType.EV_NO_ACTION:
+                    continue
+                imr_index = event.imr_index
+                digests = event.digests
+
             # Skip EV_NO_ACTION event during replay as
             # it will not result in a digest being extended into a PCR
-            if event.event_type == TcgEventType.EV_NO_ACTION:
+            if event_type == TcgEventType.EV_NO_ACTION:
                 continue
 
             # pylint: disable-next=consider-iterating-dictionary
-            if event.imr_index not in measurement_dict.keys():
-                measurement_dict[event.imr_index] = {}
+            if imr_index not in measurement_dict.keys():
+                measurement_dict[imr_index] = {}
 
-            for digest in event.digests:
+            for digest in digests:
                 alg_id = digest.alg.alg_id
                 hash_val = digest.hash
 
@@ -451,12 +505,12 @@ class EventLogs:
                         continue
 
                 # Initialize value if alg_id not found in dict
-                if alg_id not in measurement_dict[event.imr_index].keys():
-                    measurement_dict[event.imr_index][alg_id] = bytearray(
+                if alg_id not in measurement_dict[imr_index].keys():
+                    measurement_dict[imr_index][alg_id] = bytearray(
                         TcgAlgorithmRegistry.TPM_ALG_HASH_DIGEST_SIZE_TABLE[alg_id])
 
                 # Do replay and update the result into dict
-                algo.update(measurement_dict[event.imr_index][alg_id] + hash_val)
-                measurement_dict[event.imr_index][alg_id] = algo.digest()
+                algo.update(measurement_dict[imr_index][alg_id] + hash_val)
+                measurement_dict[imr_index][alg_id] = algo.digest()
 
         return measurement_dict
