@@ -1,2 +1,0 @@
-cctrusted_base
-pytest

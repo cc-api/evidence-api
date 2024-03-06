@@ -8,16 +8,12 @@ on:
       - 'common/rust/cctrusted_base/src/**.rs'
       - 'common/rust/cctrusted_base/src/tdx/**.rs'
       - 'common/rust/cctrusted_base/src/tpm/**.rs'
-      - 'vmsdk/rust/cctrusted_vm/src/**.rs'
-      - 'vmsdk/rust/sample/src/**.rs'      
       - '.github/workflows/pr-check-rust.yaml'
   pull_request:
     paths:
       - 'common/rust/cctrusted_base/src/**.rs'
       - 'common/rust/cctrusted_base/src/tdx/**.rs'
       - 'common/rust/cctrusted_base/src/tpm/**.rs'
-      - 'vmsdk/rust/cctrusted_vm/src/**.rs'
-      - 'vmsdk/rust/sample/src/**.rs'      
       - '.github/workflows/pr-check-rust.yaml'
   workflow_dispatch:
 
@@ -44,12 +40,4 @@ jobs:
           cargo fmt -- --check
           cargo clippy
           cargo install --locked cargo-deny
-          cargo deny check
-
-      - name: Run cargo check for VM SDK
-        run: |
-          cd vmsdk/rust/cctrusted_vm/
-          cargo check
-          cargo fmt -- --check
-          cargo clippy
           cargo deny check

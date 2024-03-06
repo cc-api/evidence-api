@@ -63,7 +63,7 @@ Choose correct SDK according to your environment. Installation guide can be foun
 | SDK | Deployment Scenarios | Installation Guide |
 | --- | --------------- | -- |
 | Firmware SDK | Firmware Application | |
-| [VM SDK](https://github.com/cc-api/cc-trusted-api/tree/main/vmsdk) | Confidential Virtual Machine | [Guide](vmsdk/README.md) |
+| [VM SDK](https://github.com/cc-api/cc-trusted-vmsdk) | Confidential Virtual Machine | [Guide](https://github.com/cc-api/cc-trusted-vmsdk/blob/main/README.md) |
 | [Confidential Cloud Native Primitives (CCNP)](https://github.com/cc-api/confidential-cloud-native-primitives) | Confidential Cluster/Container | [Guide](https://github.com/cc-api/confidential-cloud-native-primitives/blob/main/deployment/README.md) |
 
 ## 5. How to use the APIs
@@ -93,12 +93,14 @@ for index in range(CCTrustedVmSdk.inst().get_measurement_count()):
     LOG.info("HASH: %s", hash_str)
 ```
 
-Run [cc_imr_cli.py](vmsdk/python/cc_imr_cli.py) to execute the sample.
+Run [cc_imr_cli.py](https://github.com/cc-api/cc-trusted-vmsdk/blob/main/src/python/cc_imr_cli.py) to execute the sample.
 
 ```
+$ git clone https://github.com/cc-api/cc-trusted-vmsdk.git
+$ cd cc-trusted-vmsdk
 $ sudo su
 # source setupenv.sh
-# cd vmsdk/python
+# cd src/python
 # python3 cc_imr_cli.py
 ```
 
@@ -148,19 +150,21 @@ if quote is not None:
     quote.dump(is_raw=True)
 ```
 
-Run [cc_quote_cli.py](vmsdk/python/cc_quote_cli.py) to execute the sample.
+Run [cc_quote_cli.py](https://github.com/cc-api/cc-trusted-vmsdk/blob/main/src/python/cc_quote_cli.py) to execute the sample.
 
 ```
+$ git clone https://github.com/cc-api/cc-trusted-vmsdk.git
+$ cd cc-trusted-vmsdk
 $ sudo su
 # source setupenv.sh
-# cd vmsdk/python
+# cd src/python
 # python3 cc_quote_cli.py
 ```
 
 Below is the example output for `get_cc_report` API on Intel® TDX via VM SDK:
 
 ```
-root@tdx-guest:/home/tdx/cc-trusted-api/vmsdk/python# python3 ./cc_quote_cli.py
+root@tdx-guest:/home/tdx/cc-trusted-vmsdk/src/python# python3 ./cc_quote_cli.py
 cctrusted.cvm DEBUG    Successful open device node /dev/tdx_guest
 cctrusted.cvm DEBUG    Successful read TDREPORT from /dev/tdx_guest.
 cctrusted.cvm DEBUG    Successful parse TDREPORT.
@@ -210,12 +214,14 @@ event_logs = CCTrustedVmSdk.inst().get_cc_eventlog(start, count)
             event_logs.dump()
 ```
 
-Run [cc_event_log_cli.py](vmsdk/python/cc_event_log_cli.py) to execute the sample.
+Run [cc_event_log_cli.py](https://github.com/cc-api/cc-trusted-vmsdk/blob/main/src/python/cc_event_log_cli.py) to execute the sample.
 
 ```
+$ git clone https://github.com/cc-api/cc-trusted-vmsdk.git
+$ cd cc-trusted-vmsdk
 $ sudo su
 # source setupenv.sh
-# cd vmsdk/python
+# cd src/python
 # python3 cc_event_log_cli.py [-s <start_index_of_event_log>] [-c <count_of_event_logs>]
 ```
 

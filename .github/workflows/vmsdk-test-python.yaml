@@ -5,13 +5,11 @@ on:
     branches:
       - main
     paths:
-      - 'vmsdk/**/*.py'
       - 'common/**/*.py'
       - 'setupenv.sh'
       - '.github/workflows/vmsdk-test-python.yaml'
   pull_request:
     paths:
-      - 'vmsdk/**/*.py'
       - 'common/**/*.py'
       - 'setupenv.sh'
       - '.github/workflows/vmsdk-test-python.yaml'
@@ -19,6 +17,7 @@ on:
 
 env:
   VMSDK_PYTEST_DIR: 'vmsdk_pytest'
+  VMSDK_DIR: 'cc-trusted-vmsdk'
 
 jobs:
   vmsdk_pytest:
@@ -34,19 +33,24 @@ jobs:
           # by previous run with sudo. Otherwise, the checkout
           # will fail with permission issue.
           sudo rm -fr ./*
-      - name: Checkout repo
+      - name: Checkout cc-trusted-api repo
         uses: actions/checkout@v4
         with:
           path: ${{env.VMSDK_PYTEST_DIR}}
+      - name: Checkout cc-trusted-vmsdk repo
+        uses: actions/checkout@v4
+        with:
+          repository: cc-api/cc-trusted-vmsdk
+          path: ${{env.VMSDK_PYTEST_DIR}}/${{env.VMSDK_DIR}}
       - name: Run PyTest for VMSDK
         run: |
           set -ex
-          # Set the "PYTHONDONTWRITEBYTECODE" and "no:cacheprovider" to prevent
-          # generated some intermediate files by root. Othwerwise, these
-          # files will fail the action/checkout in the next round of running
-          # due to the permission issue.
-          sudo su -c "source setupenv.sh && \
-                      pushd vmsdk/python/tests && \
-                      export PYTHONDONTWRITEBYTECODE=1 && \
-                      python3 -m pytest -p no:cacheprovider -v test_sdk.py && \
-                      popd"
+          cd ${{env.VMSDK_DIR}}
+          # The trick here is that we need to use the local version
+          # of cctrusted_base instead of the version instaleed by
+          # setupenv.sh. So uninstall it and reinstall from local.
+          sudo su -c 'source setupenv.sh && \
+            python3 -m pip uninstall -y cctrusted_base && \
+            python3 -m pip install ../common/python && \
+            cd src/python/tests && \
+            python3 -m pytest -v test_sdk.py'
