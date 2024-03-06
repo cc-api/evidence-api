@@ -1,7 +1,12 @@
 package tdx
 
 import (
+	"bufio"
 	"encoding/binary"
+	"log"
+	"os"
+	"strconv"
+	"strings"
 
 	"github.com/cc-api/cc-trusted-api/common/golang/cctrusted_base"
 )
@@ -46,6 +51,8 @@ const (
 
 	TEE_SGX TeeType = 0x00000000
 	TEE_TDX TeeType = 0x00000081
+
+	TDX_ATTEST_CONFIG_PATH = "/etc/tdx-attest.conf"
 )
 
 func (t AttestationKeyType) String() string {
@@ -69,24 +76,64 @@ func (t TeeType) String() string {
 }
 
 type TDXDeviceSpec struct {
-	Version          cctrusted_base.DeviceVersion
-	DevicePath       string
-	AllowedOperation map[OperatorName]uintptr
+	Version             cctrusted_base.DeviceVersion
+	DevicePath          string
+	TdxAttestConfigPath string
+	AllowedOperation    map[OperatorName]uintptr
+}
+
+func (spec *TDXDeviceSpec) ProbeAttestConfig() map[string]string {
+	logger := log.Default()
+	attrMap := make(map[string]string)
+	_, err := os.Stat(spec.DevicePath)
+	if err != nil {
+		return attrMap
+	}
+
+	file, err := os.Open(spec.TdxAttestConfigPath)
+	if err != nil {
+		logger.Println("TDX attest config not found. No config fetched.")
+		return attrMap
+	}
+	defer file.Close()
+
+	// read file by line and store configs to map
+	fileScanner := bufio.NewScanner(file)
+	fileScanner.Split(bufio.ScanLines)
+	for fileScanner.Scan() {
+		attr := strings.Split(strings.Trim(fileScanner.Text(), " "), "=")
+		attrMap[attr[0]] = attr[1]
+	}
+
+	// verify if valid port number specified
+	// convert port number into integer in map for comparison
+	if val, ok := attrMap["port"]; ok {
+		port_int, err := strconv.Atoi(val)
+		if err != nil {
+			delete(attrMap, "port")
+		} else if port_int <= 0 || port_int > 65535 {
+			delete(attrMap, "port")
+		}
+	}
+
+	return attrMap
 }
 
 var (
 	TdxDeviceSpecs = map[string]TDXDeviceSpec{
 		TDX_VERSION_1_0_DEVICE: {
-			Version:    TDX_VERSION_1_0,
-			DevicePath: TDX_VERSION_1_0_DEVICE,
+			Version:             TDX_VERSION_1_0,
+			DevicePath:          TDX_VERSION_1_0_DEVICE,
+			TdxAttestConfigPath: TDX_ATTEST_CONFIG_PATH,
 			AllowedOperation: map[OperatorName]uintptr{
 				GetTdReport: uintptr(binary.BigEndian.Uint32([]byte{192, 8, 'T', 1})),
 				GetQuote:    uintptr(binary.BigEndian.Uint32([]byte{128, 8, 'T', 2})),
 			},
 		},
 		TDX_VERSION_1_5_DEVICE: {
-			Version:    TDX_VERSION_1_5,
-			DevicePath: TDX_VERSION_1_5_DEVICE,
+			Version:             TDX_VERSION_1_5,
+			DevicePath:          TDX_VERSION_1_5_DEVICE,
+			TdxAttestConfigPath: TDX_ATTEST_CONFIG_PATH,
 			AllowedOperation: map[OperatorName]uintptr{
 				GetTdReport: uintptr(binary.BigEndian.Uint32([]byte{196, 64, 'T', 1})),
 				GetQuote:    uintptr(binary.BigEndian.Uint32([]byte{128, 16, 'T', 4})),
