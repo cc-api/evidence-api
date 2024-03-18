@@ -27,7 +27,7 @@ func (t CC_Type) String() string {
 }
 
 type CCTrustedAPI interface {
-	GetDefaultAlgorithm() TCG_ALG
+	GetDefaultAlgorithm() (TCG_ALG, error)
 
 	GetCCReport(nonce, userData string, extraArgs any) (Report, error)
 	DumpCCReport(reportBytes []byte) error
@@ -35,6 +35,8 @@ type CCTrustedAPI interface {
 	GetMeasurementCount() (int, error)
 	GetCCMeasurement(index int, alg TCG_ALG) (TcgDigest, error)
 
-	GetCCEventLog(start, count int32) (*EventLogger, error)
+	// two optional params can be specified for GetCCEventLog()
+	// which are start and count
+	GetCCEventLog(params ...int32) ([]FormatedTcgEvent, error)
 	ReplayCCEventLog(formatedEventLogs []FormatedTcgEvent) map[int]map[TCG_ALG][]byte
 }
