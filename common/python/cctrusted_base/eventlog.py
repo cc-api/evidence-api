@@ -403,7 +403,7 @@ class EventLogs:
         rec_num = self._get_record_number(int(elements[imr_idx]))
 
         # Merge the elements left as event data
-        event = bytes(" ".join(elements[template_idx+1:]), "ascii")
+        event = bytes(" ".join(elements[template_idx+1:]), "utf-8")
         event_size = len(event)
 
         # Use digest size to figure out the algorithm id
