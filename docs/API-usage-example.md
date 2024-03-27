@@ -148,7 +148,14 @@ cctrusted_base.binaryblob INFO     000010E0  2D 2D 0A 00                        
 ## Dump the event log
 
 Following are the boot-time event log collected by [VMSDK's sample code](/vmsdk/python/cc_event_log_cli.py).
-Please refer the event logs collected in container with runtime IMA part at [CCNP's sample output within Container](https://github.com/cc-api/confidential-cloud-native-primitives/blob/main/docs/sample-output-for-node-measurement-tool-full.txt)
+
+Please refer to [TD event logs sample output](./vmsdk-eventlog-sample-output-with-IMA.txt) for the node level event log collected in Intel TDX VM with runtime IMA enabled.
+
+**NOTE:**
+  - The output may vary according to your kernel command line parameters of IMA.
+  - Boot time event logs format is compliant to TCG_PCClientPCREvent. Runtime event logs is compliant to Canonical Event Log Specification.
+
+Please refer to [CCNP's sample output within Container](https://github.com/cc-api/confidential-cloud-native-primitives/blob/main/docs/sample-output-for-container-eventlog.txt) for the container level event logs collected in container with runtime IMA enabled.
 
 ```
 $ python3 vmsdk/python/cc_event_log_cli.py
