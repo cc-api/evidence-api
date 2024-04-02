@@ -1,5 +1,6 @@
 use crate::api_data::Algorithm;
 use crate::api_data::*;
+use crate::eventlog::EventLogs;
 use crate::tcg::EventLogEntry;
 use crate::tcg::TcgDigest;
 use core::result::Result;
@@ -120,7 +121,9 @@ pub trait CCTrustedApi {
     */
     fn replay_cc_eventlog(
         eventlogs: Vec<EventLogEntry>,
-    ) -> Result<Vec<ReplayResult>, anyhow::Error>;
+    ) -> Result<Vec<ReplayResult>, anyhow::Error> {
+        EventLogs::replay(eventlogs)
+    }
 }
 
 /***
