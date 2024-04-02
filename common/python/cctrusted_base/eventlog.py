@@ -40,9 +40,10 @@ class TcgEventLog:
     """
 
     TCG_FORMAT_PCCLIENT = 0
-    TCG_FORMAT_CEL_TLV = 1
-    TCG_FORMAT_CEL_JSON = 2
-    TCG_FORMAT_CEL_CBOR = 3
+    TCG_FORMAT_CEL = 1
+    TCG_FORMAT_CEL_TLV = 2
+    TCG_FORMAT_CEL_JSON = 3
+    TCG_FORMAT_CEL_CBOR = 4
 
     def __init__(self, rec_num:int, imr_index:int, event_type:TcgEventType, digests:list[TcgDigest],
                  event_size:int, event:bytes, extra_info=None) -> None:
@@ -59,9 +60,8 @@ class TcgEventLog:
         if parse_format == self.TCG_FORMAT_PCCLIENT:
             return self._to_tcg_pcclient_format()
 
-        if parse_format in (self.TCG_FORMAT_CEL_JSON, self.TCG_FORMAT_CEL_CBOR,
-                            self.TCG_FORMAT_CEL_TLV) :
-            return self._to_tcg_canonical_format(parse_format)
+        if parse_format == self.TCG_FORMAT_CEL :
+            return self._to_tcg_canonical_format()
 
         return None
 
@@ -79,7 +79,7 @@ class TcgEventLog:
         return TcgImrEvent(self._imr_index, self._event_type, self._digests, self._event_size,
                                self._event)
 
-    def _to_tcg_canonical_format(self, encoding:str=None):
+    def _to_tcg_canonical_format(self):
         """The function to convert event log data into event log following
            Canonical Eventlog Spec.
         """
@@ -101,8 +101,9 @@ class TcgEventLog:
                                 None,
                                 content_data)
 
-        # switch encoding according to user input
-        return TcgTpmsCelEvent.encode(event, encoding)
+        # return basic CEL event
+        # can switch encoding by calling the TcgTpmsCelEvent.encoding()
+        return event
 
 class EventLogs:
     """EventLogs class.
@@ -251,7 +252,7 @@ class EventLogs:
         for event in self._runtime_data.splitlines():
             event_log = self._parse_ima_event_log(event)
             self._event_logs.append(
-                event_log.format_event_log(TcgEventLog.TCG_FORMAT_CEL_TLV))
+                event_log.format_event_log(TcgEventLog.TCG_FORMAT_CEL))
             self._count += 1
 
     def _parse_spec_id_event_log(self, data:bytes) -> (TcgEventLog, int):
@@ -452,7 +453,7 @@ class EventLogs:
             # TODO: consider CEL-JSON/CEL-CBOR encoding later
             # extract common attributes from different formats, only consider TLV encoding for now
             if isinstance(event, TcgTpmsCelEvent):
-                content_type = event.content.type
+                content_type = event.content_type
                 # Align the Canonical types with TCG PCClient Event types
                 match content_type:
                     case TcgCelTypes.CEL_IMA_TEMPLATE:
@@ -460,14 +461,13 @@ class EventLogs:
                     case TcgCelTypes.CEL_PCCLIENT_STD:
                         # For PCClient_STD event,
                         # the event type is store within the content attribute
-                        event_type = event.content.value[0].value
+                        # event_type = event.content.value[0].value
+                        event_type = event.content.event_type
 
                 # TODO: consider the NV_INDEX case later
-                imr_index = event.index.value
+                imr_index = event.index
 
-                digests = []
-                for d in event.digests.value:
-                    digests.append(TcgDigest(d.type, d.value))
+                digests = event.digests
             else:
                 event_type = event.event_type
                 # Skip EV_NO_ACTION event during replay as

@@ -5,6 +5,8 @@ import logging
 from abc import abstractmethod
 from cctrusted_base.tcg import TcgDigest
 from cctrusted_base.tcg import TcgAlgorithmRegistry
+from cctrusted_base.tcg import TcgEventType
+from cctrusted_base.eventlog import TcgImrEvent
 from cctrusted_base.binaryblob import BinaryBlob
 
 LOG = logging.getLogger(__name__)
@@ -83,33 +85,50 @@ class TcgTpmsCelEvent:
 
     @property
     def content(self):
-        """Content of the event.a"""
+        """Content of the event."""
         return self._content
 
     def set_content(self, content):
         """Set formatted value for content."""
         self._content = content
 
+    @property
+    def content_type(self):
+        """Content type of event."""
+        return self._content_type
+
     def encoding(self):
         """Get the encoding format of the event"""
         return self._encoding
 
+    def to_pcclient_format(self):
+        """Convert CEL event log to PCClient format"""
+        if self._content_type == TcgCelTypes.CEL_IMA_TEMPLATE:
+            event = self.content.template_data
+            return TcgImrEvent(self._imr, TcgEventType.IMA_MEASUREMENT_EVENT,
+                               self._digests, len(event), event)
+        if self._content_type == TcgCelTypes.CEL_PCCLIENT_STD:
+            return TcgImrEvent(self._imr, self.content.event_type, self._digests,
+                               len(self.content.event_data), self.content.event_data)
+        LOG.error("Unsupported content to parse into TCG PCClient format.")
+        return None
+
     @staticmethod
-    def encode(obj, encoding:int=1):
+    def encode(obj, encoding:int=2):
         """Encode the CEL record in certain format"""
         match encoding:
-            # TCG_FORMAT_CEL_TLV = 1
-            case 1:
+            # TcgEventLog.TCG_FORMAT_CEL_TLV = 2
+            case 2:
                 # pylint: disable-next=w0212
                 obj._encoding = "TLV"
                 return TcgTpmsCelEvent._encoded_in_tlv(obj)
-            # TCG_FORMAT_CEL_JSON = 2
-            case 2:
+            # TcgEventLog.TCG_FORMAT_CEL_JSON = 3
+            case 3:
                 # pylint: disable-next=w0212
                 obj._encoding = "JSON"
                 return TcgTpmsCelEvent._encoded_in_json(obj)
-            # TCG_FORMAT_CEL_CBOR = 3
-            case 3:
+            # TcgEventLog.TCG_FORMAT_CEL_JSON = 4
+            case 4:
                 # pylint: disable-next=w0212
                 obj._encoding = "CBOR"
                 return TcgTpmsCelEvent._encoded_in_cbor(obj)
