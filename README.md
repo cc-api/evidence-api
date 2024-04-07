@@ -54,6 +54,7 @@ The [APIs](common/python/cctrusted_base/api.py) are designed to be vendor agnost
 | get_cc_measurement | Get measurement register according to given selected index and algorithms. | imr_select ([int, int]): The first is index of measurement register, the second is the algorithms ID | An integer telling the count of measurement registers |
 | get_cc_report | Get the quote for given nonce and data. | nonce: a number used to protect private communications by preventing replay attacks<br> data: the data specified by user<br> extraArgs: the placeholder for extra arguments required in vTPM or other TEE cases  | A `CcReport` (i.e. quote) object |
 | get_cc_eventlog | Get eventlog for given index and count. | start: the index of the event log to start fetching<br> count: the number of event logs to fetch | A `TcgEventLog` object |
+| replay_cc_eventlog | Replay event logs fetched through `get_cc_eventlog` api. | event_logs: a list of event logs fetched using `get_cc_eventlog` api | A dict listing the replay result containing information including IMR index number, algorithm using and replayed measurement |
 
 ## 4. SDKs
 
