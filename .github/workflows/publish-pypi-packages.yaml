@@ -1,4 +1,4 @@
-name: Publish pycloudstack package to PyPI
+name: Publish the package to PyPI
 
 on:
   workflow_dispatch:
@@ -6,7 +6,7 @@ on:
 
 jobs:
   publish_pypi:
-    name: Publish pycloudstack package
+    name: Publish package
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
