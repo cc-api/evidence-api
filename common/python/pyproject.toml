@@ -1,6 +1,6 @@
 [project]
 name = "cctrusted_base"
-version = "0.3.1"
+version = "0.4.0"
 authors = [
   { name="Lu, Ken", email="ken.lu@intel.com" },
   { name="Zhang, Wenhui", email="wenhui.zhang@bytedance.com" },
