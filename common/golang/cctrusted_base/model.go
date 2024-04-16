@@ -18,3 +18,10 @@ type Report interface {
 	IMRGroup() IMRGroup
 	Dump(QuoteDumpFormat)
 }
+
+type CcReport struct {
+	Outblob    []byte
+	Auxblob    []byte
+	Provider   string
+	Generation int
+}
