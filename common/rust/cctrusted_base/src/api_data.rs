@@ -12,9 +12,13 @@ use crate::tcg::TcgDigest;
 pub struct ExtraArgs {}
 
 // return of API get_cc_report()
+#[derive(Default)]
 pub struct CcReport {
     pub cc_report: Vec<u8>,
     pub cc_type: TeeType,
+    pub cc_aux_blob: Option<Vec<u8>>,
+    pub cc_report_generation: Option<u32>,
+    pub cc_provider: Option<String>,
 }
 
 /***

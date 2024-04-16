@@ -1,26 +1,26 @@
-use hashbrown::HashMap;
+use core::convert::From;
 
 // supported TEE types
-#[derive(Clone, Eq, Hash, PartialEq, Debug)]
+#[derive(Clone, Eq, Hash, PartialEq, Debug, Default)]
 pub enum TeeType {
     PLAIN = -1,
     TPM = 0,
+    #[default]
     TDX = 1,
     SEV = 2,
     CCA = 3,
 }
 
-// TEE type to type name string mapping
-lazy_static! {
-    pub static ref TEE_NAME_MAP: HashMap<TeeType, String> = {
-        let mut map: HashMap<TeeType, String> = HashMap::new();
-        map.insert(TeeType::PLAIN, "PLAIN".to_string());
-        map.insert(TeeType::TDX, "TDX".to_string());
-        map.insert(TeeType::SEV, "SEV".to_string());
-        map.insert(TeeType::CCA, "CCA".to_string());
-        map.insert(TeeType::TPM, "TPM".to_string());
-        map
-    };
+impl From<TeeType> for String {
+    fn from(t: TeeType) -> String {
+        match t {
+            TeeType::PLAIN => "PLAIN".to_string(),
+            TeeType::TPM => "TPM".to_string(),
+            TeeType::TDX => "TDX".to_string(),
+            TeeType::SEV => "SEV".to_string(),
+            TeeType::CCA => "CCA".to_string(),
+        }
+    }
 }
 
 // public known device node path
@@ -29,10 +29,10 @@ pub const TEE_TDX_1_0_PATH: &str = "/dev/tdx-guest";
 pub const TEE_TDX_1_5_PATH: &str = "/dev/tdx_guest";
 pub const TEE_SEV_PATH: &str = "/dev/sev-guest";
 pub const TEE_CCA_PATH: &str = "";
+pub const TSM_PREFIX: &str = "/sys/kernel/config/tsm/report";
 
 // holds the TEE type info
 #[derive(Clone)]
 pub struct CcType {
     pub tee_type: TeeType,
-    pub tee_type_str: String,
 }
