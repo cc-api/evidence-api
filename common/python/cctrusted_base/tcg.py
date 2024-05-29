@@ -52,8 +52,8 @@ class TcgAlgorithmRegistry:
         return "UNKNOWN"
 
     def __init__(self, alg_id: int) -> None:
-        assert alg_id in TcgAlgorithmRegistry.TPM_ALG_TABLE, \
-            "invalid parameter alg_id"
+        #assert alg_id in TcgAlgorithmRegistry.TPM_ALG_TABLE, \
+        #    "invalid parameter alg_id"
         self._alg_id = alg_id
 
     @property
