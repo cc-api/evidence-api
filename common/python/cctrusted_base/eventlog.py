@@ -119,7 +119,13 @@ class EventLogs:
     """
     spec_id_header_event = None
 
-    def __init__(self, boot_time_data:bytes, runtime_data:bytes, parse_format:str=None) -> None:
+    def __init__(
+        self,
+        boot_time_data:bytes,
+        runtime_data:bytes,
+        platform:int=0,
+        parse_format:str=None
+    ) -> None:
         self._boot_time_data = boot_time_data
         self._runtime_data = runtime_data
         self._event_logs = []
@@ -127,6 +133,8 @@ class EventLogs:
         self._parse_format:str = parse_format
         # Initiate the record number list for each index with default value 0
         self.event_logs_record_number_list = [0] * 24
+        # Underlying platform that the event logs come from
+        self.platform = platform
 
     @property
     def event_logs(self):
@@ -280,10 +288,9 @@ class EventLogs:
         blob = BinaryBlob(data, 0)
 
         imr_index, index = blob.get_uint32(index)
-        header_imr = imr_index - 1
         header_event_type, index = blob.get_uint32(index)
 
-        rec_num = self._get_record_number(header_imr)
+        rec_num = self._get_record_number(imr_index)
 
         digest, index = blob.get_bytes(index, 20)  # 20 zero for digest
         # Convert digest to common TcgDigest type
@@ -294,7 +301,7 @@ class EventLogs:
         header_event_size, index = blob.get_uint32(index) # 4 bytes containing event size
         header_event, _ = blob.get_bytes(index, header_event_size)
 
-        specification_id_header = TcgEventLog(rec_num, header_imr, header_event_type, digests,
+        specification_id_header = TcgEventLog(rec_num, imr_index, header_event_type, digests,
                                                    header_event_size, header_event)
 
         # Parse EFI Spec Id Event structure
@@ -348,7 +355,6 @@ class EventLogs:
         blob = BinaryBlob(data, 0)
 
         imr_index, index = blob.get_uint32(index)
-        imr_index = imr_index - 1
         event_type, index = blob.get_uint32(index)
 
         rec_num = self._get_record_number(imr_index)
@@ -401,7 +407,14 @@ class EventLogs:
         digest_idx = 1
         template_idx = 2
 
-        rec_num = self._get_record_number(int(elements[imr_idx]))
+        imr_val = int(elements[imr_idx])
+        # if the underlying platform is TDX
+        # increment the offset (1) between cc measurement
+        # register (defined in CCEL) and TDX measurment register
+        if self.platform == 1:
+            imr_val = imr_val + 1
+
+        rec_num = self._get_record_number(imr_val)
 
         # Merge the elements left as event data
         event = bytes(" ".join(elements[template_idx+1:]), "utf-8")
@@ -424,7 +437,7 @@ class EventLogs:
             "template_name": elements[template_idx]
         }
 
-        return TcgEventLog(rec_num, int(elements[imr_idx]),
+        return TcgEventLog(rec_num, imr_val,
                            TcgEventType.IMA_MEASUREMENT_EVENT, digests,
                            event_size, event, extra_info)
 
