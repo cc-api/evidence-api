@@ -2,7 +2,11 @@
 TPM Quote related classes.
 """
 
+import logging
 from cctrusted_base.ccreport import CcReport, CcReportData, CcReportSignature
+from cctrusted_base.binaryblob import BinaryBlob
+
+LOG = logging.getLogger(__name__)
 
 class Tpm2Quote(CcReport):
     """TPM 2 Quote.
@@ -28,17 +32,26 @@ class Tpm2Quote(CcReport):
             data: A bytearray storing the raw data.
         """
         super().__init__(data, cc_type)
-        # TODO: parse raw data into header, body and sigature
+        self._quoted_data = None
+        self._signature = None
+
+    def set_quoted_data(self, data):
+        """Set TPM2 quote header"""
+        self._quoted_data = data
+
+    def set_sig(self, sig):
+        """Set TPM2 quote signature"""
+        self._signature = sig
 
     def get_quoted_data(self) -> CcReportData:
         """Get TPM2 quote header."""
         # TODO: parse the raw data to get quoted data
-        return None
+        return self._quoted_data.marshal()
 
     def get_sig(self) -> CcReportSignature:
         """Get TPM2 quote signature."""
         # TODO: parse the raw data to get signature
-        return None
+        return self._signature.marshal()
 
     def dump(self, is_raw=True) -> None:
         """Dump Quote Data.
@@ -49,4 +62,11 @@ class Tpm2Quote(CcReport):
                 False: dump in human readable texts.
         """
         # TODO: add human readable dump
-        super().dump()
+        LOG.info("======================================")
+        LOG.info("TPM2 Quote")
+        LOG.info("======================================")
+        if is_raw:
+            BinaryBlob(self._quoted_data.marshal()).dump()
+            BinaryBlob(self._signature.marshal()).dump()
+        else:
+            LOG.error("Structured TPM2 Quote dump is not available now.")
