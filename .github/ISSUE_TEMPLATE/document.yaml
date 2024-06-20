@@ -1,0 +1,25 @@
+name: Documentation Issue
+description: Provide supporting details for documentation issue
+labels: kind/documentation
+body:
+  - type: textarea
+    id: document
+    attributes:
+      label: Which document would you like to address?
+      description: Include the link to the document if applicable
+    validations:
+      required: true
+
+  - type: textarea
+    id: documentFixDetailWhat
+    attributes:
+      label: What is the issue?
+    validations:
+      required: true
+
+  - type: textarea
+    id: documentFixDetailHow
+    attributes:
+      label: How do you suggest this is fixed?
+    validations:
+      required: false
