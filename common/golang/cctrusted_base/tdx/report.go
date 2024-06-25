@@ -1,6 +1,7 @@
 package tdx
 
 import (
+	"errors"
 	"github.com/cc-api/cc-trusted-api/common/golang/cctrusted_base"
 )
 
@@ -51,7 +52,7 @@ func (t *TdxReport) Marshal() ([]byte, error) {
 	rawBytes := append(t.Quote.Header.raw.Binary, t.Quote.Body.raw.Binary...)
 	sig_ecdsa, ok := t.Quote.Signature.(*TdxQuoteSignatureEcdsa256)
 	if !ok {
-		return []byte{}, errors.new("Invalid TDX Quote Signature.")
+		return []byte{}, errors.New("Invalid TDX Quote Signature.")
 	}
 
 	rawBytes = append(rawBytes, sig_ecdsa.raw.Binary...)
