@@ -30,7 +30,7 @@ jobs:
           # by previous run with sudo. Otherwise, the checkout
           # will fail with permission issue.
           sudo rm -fr ./*
-      - name: Checkout cc-trusted-api repo
+      - name: Checkout evidence-api repo
         uses: actions/checkout@v4
         with:
           path: ${{env.VMSDK_RUST_TEST_DIR}}
@@ -45,5 +45,5 @@ jobs:
           # The trick here is to override the dependencies with local version.
           echo "" >> Cargo.toml
           echo "[patch.crates-io]" >> Cargo.toml
-          echo 'cctrusted_base = { path = "../../../../common/rust/cctrusted_base" }' >> Cargo.toml
+          echo 'evidence_api = { path = "../../../../common/rust/evidence_api" }' >> Cargo.toml
           sudo bash -c "export CARGO_TERM_COLOR=always && cargo test --verbose"

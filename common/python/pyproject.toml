@@ -1,11 +1,11 @@
 [project]
-name = "cctrusted_base"
+name = "evidence_api"
 version = "0.5.0"
 authors = [
   { name="Lu, Ken", email="ken.lu@intel.com" },
   { name="Zhang, Wenhui", email="wenhui.zhang@bytedance.com" },
 ]
-description = "CC Trusted API Base SDK"
+description = "Evidence API Base SDK"
 readme = "README.md"
 license = { text="Apache Software License" }
 requires-python = ">=3.6"
@@ -18,8 +18,8 @@ dependencies = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/cc-api/cc-trusted-api"
-"Bug Tracker" = "https://github.com/cc-api/cc-trusted-api/issues"
+"Homepage" = "https://github.com/cc-api/evidence-api"
+"Bug Tracker" = "https://github.com/cc-api/evidence-api/issues"
 
 [build-system]
 requires = ["setuptools", "wheel"]
@@ -27,4 +27,4 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 where=["."]
-include=["cctrusted_base*"]
+include=["evidence_api*"]

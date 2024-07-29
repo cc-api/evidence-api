@@ -33,7 +33,7 @@ jobs:
           # by previous run with sudo. Otherwise, the checkout
           # will fail with permission issue.
           sudo rm -fr ./*
-      - name: Checkout cc-trusted-api repo
+      - name: Checkout evidence-api repo
         uses: actions/checkout@v4
         with:
           path: ${{env.VMSDK_PYTEST_DIR}}
@@ -47,10 +47,10 @@ jobs:
           set -ex
           cd ${{env.VMSDK_DIR}}
           # The trick here is that we need to use the local version
-          # of cctrusted_base instead of the version installed by
+          # of evidence_api instead of the version installed by
           # setupenv.sh. So uninstall it and reinstall from local.
           sudo su -c 'source setupenv.sh && \
-            python3 -m pip uninstall -y cctrusted_base && \
+            python3 -m pip uninstall -y evidence_api && \
             python3 -m pip install ../common/python && \
             cd src/python/tests && \
             python3 -m pytest -v test_sdk.py'
