@@ -1,5 +1,5 @@
 name: Bug Report
-description: Create a bug report to help improve CC Trusted API
+description: Create a bug report to help improve Evidence API
 labels: kind/bug
 body:
   - type: textarea
