@@ -37,6 +37,7 @@
         "MRTD",
         "CCEL",
         "Bootloader",
-        "VMSDK"
+        "VMSDK",
+        "CIMA"
     ]
 }

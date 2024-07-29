@@ -5,15 +5,15 @@ on:
     branches:
       - main
     paths:
-      - 'common/rust/cctrusted_base/src/**.rs'
-      - 'common/rust/cctrusted_base/src/tdx/**.rs'
-      - 'common/rust/cctrusted_base/src/tpm/**.rs'
+      - 'common/rust/evidence_api/src/**.rs'
+      - 'common/rust/evidence_api/src/tdx/**.rs'
+      - 'common/rust/evidence_api/src/tpm/**.rs'
       - '.github/workflows/pr-check-rust.yaml'
   pull_request:
     paths:
-      - 'common/rust/cctrusted_base/src/**.rs'
-      - 'common/rust/cctrusted_base/src/tdx/**.rs'
-      - 'common/rust/cctrusted_base/src/tpm/**.rs'
+      - 'common/rust/evidence_api/src/**.rs'
+      - 'common/rust/evidence_api/src/tdx/**.rs'
+      - 'common/rust/evidence_api/src/tpm/**.rs'
       - '.github/workflows/pr-check-rust.yaml'
   workflow_dispatch:
 
@@ -33,9 +33,9 @@ jobs:
         run: |
           sudo apt update && yes | DEBIAN_FRONTEND=noninteractive sudo apt install -y libcryptsetup-dev clang protobuf-compiler protobuf-c-compiler libprotobuf-c-dev libprotobuf-c1 build-essential pkg-config libssl-dev
 
-      - name: Run cargo check for cctrusted_base
+      - name: Run cargo check for evidence_api
         run: |
-          cd common/rust/cctrusted_base/
+          cd common/rust/evidence_api/
           cargo check
           cargo fmt -- --check
           cargo clippy

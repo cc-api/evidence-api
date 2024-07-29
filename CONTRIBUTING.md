@@ -62,14 +62,14 @@ Here are some general guidelines and philosophy for contributing code:
     usually indicates insufficient test coverage.
 *   Keep API compatibility in mind when you change code in core design,
     e.g., code in
-    [common/python](https://github.com/cc-api/cc-trusted-api/tree/main/common/python).
+    [common/python](https://github.com/cc-api/evidence-api/tree/main/common/python).
 
 Project team members will be assigned to review your pull requests. Once the
 pull requests are approved and pass continuous integration checks,
 your pull request will be merged automatically on GitHub.
 
 Before sending your pull request for
-[review](https://github.com/cc-api/cc-trusted-api/pulls),
+[review](https://github.com/cc-api/evidence-api/pulls),
 make sure your changes are consistent with the guidelines and follow the
 coding style.
 

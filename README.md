@@ -1,15 +1,15 @@
-[![Python Code Scan](https://github.com/cc-api/cc-trusted-api/actions/workflows/pylint.yaml/badge.svg)](https://github.com/cc-api/cc-trusted-api/actions/workflows/pylint.yaml)
-[![Document Scan](https://github.com/cc-api/cc-trusted-api/actions/workflows/doclint.yaml/badge.svg)](https://github.com/cc-api/cc-trusted-api/actions/workflows/doclint.yaml)
-[![Python License Check](https://github.com/cc-api/cc-trusted-api/actions/workflows/pylicense.yaml/badge.svg)](https://github.com/cc-api/cc-trusted-api/actions/workflows/pylicense.yaml)
-[![VMSDK Python Test](https://github.com/cc-api/cc-trusted-api/actions/workflows/vmsdk-test-python.yaml/badge.svg)](https://github.com/cc-api/cc-trusted-api/actions/workflows/vmsdk-test-python.yaml)
+[![Python Code Scan](https://github.com/cc-api/evidence-api/actions/workflows/pylint.yaml/badge.svg)](https://github.com/cc-api/evidence-api/actions/workflows/pylint.yaml)
+[![Document Scan](https://github.com/cc-api/evidence-api/actions/workflows/doclint.yaml/badge.svg)](https://github.com/cc-api/evidence-api/actions/workflows/doclint.yaml)
+[![Python License Check](https://github.com/cc-api/evidence-api/actions/workflows/pylicense.yaml/badge.svg)](https://github.com/cc-api/evidence-api/actions/workflows/pylicense.yaml)
+[![VMSDK Python Test](https://github.com/cc-api/evidence-api/actions/workflows/vmsdk-test-python.yaml/badge.svg)](https://github.com/cc-api/evidence-api/actions/workflows/vmsdk-test-python.yaml)
 
-# CC Trusted API
+# Evidence API
 
-CC Trusted API helps the diverse applications to access and process the trust states
+Evidence API helps the diverse applications to access and process the trust states
 which was represented by integrity measurement, event record, report/quote in the confidential
 computing environment.
 
-![](docs/cc-trusted-api-overview.png)
+![](docs/evidence-api-overview.png)
 
 ## 1. TCB Measurement
 
@@ -19,14 +19,14 @@ different type application might get the trust states measured in different Trus
 Computing Base (TCB), the definition and structure of integrity measurement register and
 event log follows the below specifications.
 
-![](docs/cc-trusted-api-usage.png)
+![](docs/evidence-api-usage.png)
 | TCB | Measured By | Specification |
 | --- | -------- | ------------- |
 | Initial TEE | Trusted Security Manager (TSM), such as Intel TDX module, SEV secure processor | Vendor Specification such as [Intel TDX Module 1.5 ABI Specification](https://cdrdv2.intel.com/v1/dl/getContent/733579) |
 | Firmware | EFI_CC_MEASUREMENT_PROTOCOL </br> CCEL ACPI Table </br> EFI_TCG2_PROTOCOL </br> TCG ACPI Table | [UEFI Specification 2.10](https://uefi.org/specs/UEFI/2.10/38_Confidential_Computing.html#virtual-platform-cc-event-log) </br> [ACPI Specification 6.5](https://uefi.org/specs/ACPI/6.5/05_ACPI_Software_Programming_Model.html#cc-event-log-acpi-table) </br> [TCG EFI Protocol Specification](https://trustedcomputinggroup.org/resource/tcg-efi-protocol-specification/) </br> [TCG ACPI Specification](https://trustedcomputinggroup.org/resource/tcg-acpi-specification/) |
 | Boot Loader | EFI_CC_MEASUREMENT_PROTOCOL </br> EFI_TCG2_PROTOCOL | Grub2/Shim |
 | OS | Integrity Measurement Architecture (IMA) | [Specification](https://sourceforge.net/p/linux-ima/wiki/Home/) |
-| Cloud Native | Confidential Cloud Native Primitives (CCNP) | [Repository](https://github.com/cc-api/confidential-cloud-native-primitives) |
+| Cloud Native | Container Integrity Measurement Agent (CIMA) | [Repository](https://github.com/cc-api/container-integrity-measurement-agent) |
 
 ## 2. Trusted Foundation
 
@@ -44,8 +44,8 @@ vendor also provided simplified solution:
 
 ## 3. APIs
 
-CC Trusted APIs aims to collect confidential primitives (i.e., measurement, event log, quote) for zero-trust design, supporting multiple deployment environments (firmware/VM/cloud native cluster).
-The [APIs](common/python/cctrusted_base/api.py) are designed to be vendor agnostic and TCG compliant APIs. The APIs will keep evolving on demand. 
+Evidence APIs aims to collect confidential primitives (i.e., measurement, event log, quote) for zero-trust design, supporting multiple deployment environments (firmware/VM/cloud native cluster).
+The [APIs](common/python/evidence_api/api.py) are designed to be vendor agnostic and TCG compliant APIs. The APIs will keep evolving on demand. 
 
 | API | Description  | Parameters  | Response  |
 | --- | ------------- |----- |----- |
@@ -65,7 +65,7 @@ Choose correct SDK according to your environment. Installation guide can be foun
 | --- | --------------- | -- |
 | Firmware SDK | Firmware Application | |
 | [VM SDK](https://github.com/cc-api/cc-trusted-vmsdk) | Confidential Virtual Machine | [Guide](https://github.com/cc-api/cc-trusted-vmsdk/blob/main/README.md) |
-| [Confidential Cloud Native Primitives (CCNP)](https://github.com/cc-api/confidential-cloud-native-primitives) | Confidential Cluster/Container | [Guide](https://github.com/cc-api/confidential-cloud-native-primitives/blob/main/deployment/README.md) |
+| [Container Integrity Measurement Agent (CIMA)](https://github.com/cc-api/container-integrity-measurement-agent) | Confidential Cluster/Container | [Guide](https://github.com/cc-api/confidential-cloud-native-primitives/blob/main/deployment/README.md) |
 
 ## 5. How to use the APIs
 
@@ -172,27 +172,27 @@ cctrusted.cvm DEBUG    Successful parse TDREPORT.
 cctrusted.cvm INFO     Using report data directly to generate quote
 cctrusted.cvm DEBUG    Successful open device node /dev/tdx_guest
 cctrusted.cvm DEBUG    Successful get Quote from /dev/tdx_guest.
-cctrusted_base.tdx.quote INFO     ======================================
-cctrusted_base.tdx.quote INFO     TD Quote
-cctrusted_base.tdx.quote INFO     ======================================
-cctrusted_base.tdx.quote INFO     TD Quote Header:
-cctrusted_base.binaryblob INFO     00000000  04 00 02 00 81 00 00 00 00 00 00 00 93 9A 72 33  ..............r3
-cctrusted_base.binaryblob INFO     00000010  F7 9C 4C A9 94 0A 0D B3 95 7F 06 07 C6 0E 85 25  ..L............%
-cctrusted_base.binaryblob INFO     00000020  C8 09 3C 0E A0 64 EF F1 29 6B 85 83 00 00 00 00  ..<..d..)k......
-cctrusted_base.tdx.quote INFO     TD Quote Body:
-cctrusted_base.binaryblob INFO     00000000  04 01 01 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
-cctrusted_base.binaryblob INFO     00000010  97 90 D8 9A 10 21 0E C6 96 8A 77 3C EE 2C A0 5B  .....!....w<.,.[
-cctrusted_base.binaryblob INFO     00000020  5A A9 73 09 F3 67 27 A9 68 52 7B E4 60 6F C1 9E  Z.s..g'.hR{.`o..
+evidence_api.tdx.quote INFO     ======================================
+evidence_api.tdx.quote INFO     TD Quote
+evidence_api.tdx.quote INFO     ======================================
+evidence_api.tdx.quote INFO     TD Quote Header:
+evidence_api.binaryblob INFO     00000000  04 00 02 00 81 00 00 00 00 00 00 00 93 9A 72 33  ..............r3
+evidence_api.binaryblob INFO     00000010  F7 9C 4C A9 94 0A 0D B3 95 7F 06 07 C6 0E 85 25  ..L............%
+evidence_api.binaryblob INFO     00000020  C8 09 3C 0E A0 64 EF F1 29 6B 85 83 00 00 00 00  ..<..d..)k......
+evidence_api.tdx.quote INFO     TD Quote Body:
+evidence_api.binaryblob INFO     00000000  04 01 01 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+evidence_api.binaryblob INFO     00000010  97 90 D8 9A 10 21 0E C6 96 8A 77 3C EE 2C A0 5B  .....!....w<.,.[
+evidence_api.binaryblob INFO     00000020  5A A9 73 09 F3 67 27 A9 68 52 7B E4 60 6F C1 9E  Z.s..g'.hR{.`o..
 ...
-cctrusted_base.binaryblob INFO     00000230  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
-cctrusted_base.binaryblob INFO     00000240  00 00 00 00 00 00 00 00                          ........
-cctrusted_base.tdx.quote INFO     TD Quote Signature:
-cctrusted_base.binaryblob INFO     00000000  16 1F E4 F6 8C 05 D4 8F E2 EB EB C8 32 1A CE 6C  ............2..l
-cctrusted_base.binaryblob INFO     00000010  90 2A B5 EA 74 F5 4C 4D A2 6A 30 AC 5C A5 13 84  .*..t.LM.j0.\...
-cctrusted_base.binaryblob INFO     00000020  3D CB A2 31 20 43 8C 38 63 3D EE D1 7F B4 9F B5  =..1 C.8c=......
+evidence_api.binaryblob INFO     00000230  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+evidence_api.binaryblob INFO     00000240  00 00 00 00 00 00 00 00                          ........
+evidence_api.tdx.quote INFO     TD Quote Signature:
+evidence_api.binaryblob INFO     00000000  16 1F E4 F6 8C 05 D4 8F E2 EB EB C8 32 1A CE 6C  ............2..l
+evidence_api.binaryblob INFO     00000010  90 2A B5 EA 74 F5 4C 4D A2 6A 30 AC 5C A5 13 84  .*..t.LM.j0.\...
+evidence_api.binaryblob INFO     00000020  3D CB A2 31 20 43 8C 38 63 3D EE D1 7F B4 9F B5  =..1 C.8c=......
 ...
-cctrusted_base.binaryblob INFO     000010D0  44 20 43 45 52 54 49 46 49 43 41 54 45 2D 2D 2D  D CERTIFICATE---
-cctrusted_base.binaryblob INFO     000010E0  2D 2D 0A 00                                      --..
+evidence_api.binaryblob INFO     000010D0  44 20 43 45 52 54 49 46 49 43 41 54 45 2D 2D 2D  D CERTIFICATE---
+evidence_api.binaryblob INFO     000010E0  2D 2D 0A 00                                      --..
 ```
 
 ### 5.3 Sample of `get_cc_eventlog` API
