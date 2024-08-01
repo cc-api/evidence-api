@@ -1,4 +1,4 @@
-# CC Trusted API Examples
+# Evidence API Examples
 
 ## Dump Report (Intel® TDX only)
 

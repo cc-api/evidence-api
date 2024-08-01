@@ -1,5 +1,5 @@
 """
-The CC Trusted API
+The Evidence API
 """
 import logging
 from abc import ABC, abstractmethod
@@ -13,7 +13,7 @@ LOG = logging.getLogger(__name__)
 
 class EvidenceApi(ABC):
 
-    """Abstract class for CC Trusted API.
+    """Abstract class for Evidence API.
 
     The inherited SDK class will implement the APIs.
     """
