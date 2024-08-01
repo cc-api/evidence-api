@@ -7,44 +7,14 @@
 
 Evidence API helps the diverse applications to access and process the trust states
 which was represented by integrity measurement, event record, report/quote in the confidential
-computing environment.
+computing environment. Find more details in the [wiki](https://github.com/cc-api/evidence-api/wiki).
 
 ![](docs/evidence-api-overview.png)
 
-## 1. TCB Measurement
 
-The diverse application in confidential computing could be firmware or monolithic application
-in Confidential VM(CVM), micro service or macro service on Kubernetes. Although
-different type application might get the trust states measured in different Trusted
-Computing Base (TCB), the definition and structure of integrity measurement register and
-event log follows the below specifications.
+## APIs
 
-![](docs/evidence-api-usage.png)
-| TCB | Measured By | Specification |
-| --- | -------- | ------------- |
-| Initial TEE | Trusted Security Manager (TSM), such as Intel TDX module, SEV secure processor | Vendor Specification such as [Intel TDX Module 1.5 ABI Specification](https://cdrdv2.intel.com/v1/dl/getContent/733579) |
-| Firmware | EFI_CC_MEASUREMENT_PROTOCOL </br> CCEL ACPI Table </br> EFI_TCG2_PROTOCOL </br> TCG ACPI Table | [UEFI Specification 2.10](https://uefi.org/specs/UEFI/2.10/38_Confidential_Computing.html#virtual-platform-cc-event-log) </br> [ACPI Specification 6.5](https://uefi.org/specs/ACPI/6.5/05_ACPI_Software_Programming_Model.html#cc-event-log-acpi-table) </br> [TCG EFI Protocol Specification](https://trustedcomputinggroup.org/resource/tcg-efi-protocol-specification/) </br> [TCG ACPI Specification](https://trustedcomputinggroup.org/resource/tcg-acpi-specification/) |
-| Boot Loader | EFI_CC_MEASUREMENT_PROTOCOL </br> EFI_TCG2_PROTOCOL | Grub2/Shim |
-| OS | Integrity Measurement Architecture (IMA) | [Specification](https://sourceforge.net/p/linux-ima/wiki/Home/) |
-| Cloud Native | Container Integrity Measurement Agent (CIMA) | [Repository](https://github.com/cc-api/container-integrity-measurement-agent) |
-
-## 2. Trusted Foundation
-
-Normally Trusted Platform Module(TPM) provides root of trust for PC client platform.
-In confidential computing environment, vTPM (virtual TPM) might be provided different
-vendor or CSP, which root of trust should be hardened by vendor secure module. Some
-vendor also provided simplified solution:
-
-|           | Measurement Register | Event Log      | Specification |
-| --------- | -------------------- | ---------      | ------------- |
-| vTPM      | TPM PCR              | TCG2 Event Log | [TPM2 Specification](https://trustedcomputinggroup.org/resource/tpm-library-specification/) </br> [TCG PC Client Platform TPM Profile Specification](https://trustedcomputinggroup.org/resource/pc-client-platform-tpm-profile-ptp-specification/) </br> [TCG PC Client Platform Firmware Profile Specification](https://trustedcomputinggroup.org/resource/pc-client-specific-platform-firmware-profile-specification/) |
-| Intel TDX | TDX MRTD/RTMR        | CC Event Log   | [Intel® TDX Module 1.5 Base Architecture Specification](https://cdrdv2.intel.com/v1/dl/getContent/733575) </br> [Intel® TDX Virtual Firmware Design Guide](https://cdrdv2.intel.com/v1/dl/getContent/733585) </br> [td-shim specification](https://github.com/confidential-containers/td-shim/blob/main/doc/tdshim_spec.md) |
-
-![](docs/cc-trusted-foundation.png)
-
-## 3. APIs
-
-Evidence APIs aims to collect confidential primitives (i.e., measurement, event log, quote) for zero-trust design, supporting multiple deployment environments (firmware/VM/cloud native cluster).
+Evidence APIs aims to collect confidential evidence (i.e., measurement, event log, quote) for zero-trust design, supporting multiple deployment environments (firmware/VM/cloud native cluster).
 The [APIs](common/python/evidence_api/api.py) are designed to be vendor agnostic and TCG compliant APIs. The APIs will keep evolving on demand. 
 
 | API | Description  | Parameters  | Response  |
@@ -56,7 +26,7 @@ The [APIs](common/python/evidence_api/api.py) are designed to be vendor agnostic
 | get_cc_eventlog | Get eventlog for given index and count. | start: the index of the event log to start fetching<br> count: the number of event logs to fetch | A `TcgEventLog` object |
 | replay_cc_eventlog | Replay event logs fetched through `get_cc_eventlog` api. | event_logs: a list of event logs fetched using `get_cc_eventlog` api | A dict listing the replay result containing information including IMR index number, algorithm using and replayed measurement |
 
-## 4. SDKs
+## SDKs
 
 It provides different SDKs for producing the confidential primitives in different deployment environments.
 Choose correct SDK according to your environment. Installation guide can be found at the readme of each implementation.
@@ -67,11 +37,11 @@ Choose correct SDK according to your environment. Installation guide can be foun
 | [VM SDK](https://github.com/cc-api/cc-trusted-vmsdk) | Confidential Virtual Machine | [Guide](https://github.com/cc-api/cc-trusted-vmsdk/blob/main/README.md) |
 | [Container Integrity Measurement Agent (CIMA)](https://github.com/cc-api/container-integrity-measurement-agent) | Confidential Cluster/Container | [Guide](https://github.com/cc-api/confidential-cloud-native-primitives/blob/main/deployment/README.md) |
 
-## 5. How to use the APIs
+## How to use the APIs
 
 This section contains the brief samples of APIs. You can find more examples at [API usage example](docs/API-usage-example.md).
 
-### 5.1 Sample of `get_cc_measurement` API
+### An example of `get_cc_measurement` API
 
 Below example code collects measurements from all integrity registers of the platform using API `get_measurement_count`, `get_default_algorithms` and `get_cc_measurement` using `VMSDK` in python.
 
@@ -137,7 +107,7 @@ __main__ INFO     HASH: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
 
 ```
 
-### 5.2 Sample of `get_cc_report` API
+### An example of `get_cc_report` API
 
 Below example code collect the CcReport (i.e. quote) on the platform using `get_cc_report` API using `VMSDK` implemented by python.
 
@@ -195,7 +165,7 @@ evidence_api.binaryblob INFO     000010D0  44 20 43 45 52 54 49 46 49 43 41 54 4
 evidence_api.binaryblob INFO     000010E0  2D 2D 0A 00                                      --..
 ```
 
-### 5.3 Sample of `get_cc_eventlog` API
+### An example of `get_cc_eventlog` API
 
 Below example code collects all boot time event logs on the platform using API `get_cc_eventlog` implemented in `VMSDK` in python. Sample Event logs collected within container using `CCNP` API can be found [here](https://github.com/cc-api/confidential-cloud-native-primitives/blob/main/docs/sample-output-for-node-measurement-tool-full.txt).
 
