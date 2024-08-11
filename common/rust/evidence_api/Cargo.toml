@@ -20,3 +20,4 @@ sha2 = "0.10"
 lazy_static = "1.4.0"
 hashbrown = "0.14"
 hex = "0.4.3"
+scale = { version = "3.6.12", package = "parity-scale-codec", features = ["derive"] }

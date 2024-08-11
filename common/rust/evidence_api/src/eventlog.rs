@@ -1,10 +1,15 @@
+use std::io::Read;
+
 use crate::api_data::ReplayResult;
-use crate::binary_blob::*;
+use crate::codecs::VecOf;
 use crate::tcg::*;
 use anyhow::anyhow;
+use anyhow::bail;
+use anyhow::Context;
 use hashbrown::HashMap;
 use hex;
 use log::info;
+use scale::Decode;
 use sha1::Sha1;
 use sha2::{Digest, Sha256, Sha384, Sha512};
 
@@ -190,49 +195,39 @@ impl EventLogs {
         Go through all event log data and parse the contents accordingly
         Save the parsed event logs into EventLogs.
     */
-    fn parse(&mut self) -> Result<bool, anyhow::Error> {
+    fn parse(&mut self) -> anyhow::Result<bool> {
         if self.boot_time_data.is_empty() {
-            return Err(anyhow!("[parse] no boot time eventlog provided"));
+            bail!("[parse] no boot time eventlog provided");
         }
 
-        let mut index = 0;
-        while index < self.boot_time_data.len() {
-            let start = index;
-            let imr = get_u32(self.boot_time_data[index..index + 4].to_vec());
-            index += 4;
-            let event_type = get_u32(self.boot_time_data[index..index + 4].to_vec());
+        // A buffer used as a input reader
+        let buffer = &mut &self.boot_time_data[..];
+
+        while !buffer.is_empty() {
+            // A tmp head_buffer is used to peek the imr and event type
+            let head_buffer = &mut &buffer[..];
+            let imr = u32::decode(head_buffer).context("failed to decode imr")?;
             if imr == 0xFFFFFFFF {
                 break;
             }
+            let event_type = u32::decode(head_buffer).context("failed to decode event type")?;
 
             if event_type == EV_NO_ACTION && self.count == 0 {
-                match self.parse_spec_id_event_log(self.boot_time_data[start..].to_vec()) {
-                    Ok((spec_id_event, event_len)) => {
-                        index = start + event_len as usize;
-                        self.event_logs
-                            .push(spec_id_event.format_event_log(self.parse_format));
-                        self.count += 1;
-                    }
-                    Err(e) => {
-                        return Err(anyhow!(
-                            "[parse] error in parse_spec_id_event_log function {:?}",
-                            e
-                        ));
-                    }
-                }
+                let (spec_id_header, spec_id_event) = Self::parse_spec_id_event_log(buffer)
+                    .context("[parse] error in parse_spec_id_event_log function")?;
+                let todo = "Assign the rec_num";
+                self.event_logs
+                    .push(spec_id_header.format_event_log(self.parse_format));
+                self.spec_id_header_event = spec_id_event;
             } else {
-                match self.parse_event_log(self.boot_time_data[start..].to_vec()) {
-                    Ok((event_log, event_len)) => {
-                        index = start + event_len as usize;
-                        self.event_logs
-                            .push(event_log.format_event_log(self.parse_format));
-                        self.count += 1;
-                    }
-                    Err(e) => {
-                        return Err(anyhow!("[parse] error in parse_event_log function {:?}", e));
-                    }
-                }
+                let event_log = self
+                    .parse_event_log(buffer)
+                    .context("[parse] error in parse_event_log function")?;
+                let todo = "Assign the rec_num";
+                self.event_logs
+                    .push(event_log.format_event_log(self.parse_format));
             }
+            self.count += 1;
         }
 
         if !self.run_time_data.is_empty() {
@@ -274,95 +269,39 @@ impl EventLogs {
             An int specifying the event size
     */
     fn parse_spec_id_event_log(
-        &mut self,
-        data: Vec<u8>,
-    ) -> Result<(TcgEventLog, u32), anyhow::Error> {
-        let mut index = 0;
+        input: &mut &[u8],
+    ) -> anyhow::Result<(TcgEventLog, TcgEfiSpecIdEvent)> {
+        #[derive(Decode)]
+        struct Header {
+            imr_index: u32,
+            header_event_type: u32,
+            digest_hash: [u8; 20],
+            header_event: VecOf<u32, u8>,
+        }
 
-        let imr_index = get_u32(data[index..index + 4].to_vec());
-        index += 4;
-        let header_imr = imr_index - 1;
-        let header_event_type = get_u32(data[index..index + 4].to_vec());
-        index += 4;
+        let decoded_header = Header::decode(input).context("failed to decode log_item")?;
+        // Parse EFI Spec Id Event structure
+        let spec_id_event =
+            TcgEfiSpecIdEvent::decode(input).context("failed to decode TcgEfiSpecIdEvent")?;
 
-        let rec_num = self.get_record_number(header_imr);
-
-        let digest_hash = data[index..index + 20].try_into().unwrap();
-        index += 20;
-        let mut digests: Vec<TcgDigest> = Vec::new();
-        let digest = TcgDigest {
+        let header_imr = decoded_header
+            .imr_index
+            .checked_sub(1)
+            .ok_or(anyhow!("imr_index overflow"))?;
+        let digests = vec![TcgDigest {
             algo_id: TPM_ALG_ERROR,
-            hash: digest_hash,
-        };
-        digests.push(digest);
-
-        let header_event_size = get_u32(data[index..index + 4].to_vec());
-        index += 4;
-        let header_event = data[index..index + header_event_size as usize]
-            .try_into()
-            .unwrap();
-        let specification_id_header = TcgEventLog {
-            rec_num,
+            hash: decoded_header.digest_hash.to_vec(),
+        }];
+        let spec_id_header = TcgEventLog {
+            rec_num: 0,
             imr_index: header_imr,
-            event_type: header_event_type,
+            event_type: decoded_header.header_event_type,
             digests,
-            event_size: header_event_size,
-            event: header_event,
+            event_size: decoded_header.header_event.length(),
+            event: decoded_header.header_event.into_inner(),
             extra_info: HashMap::new(),
         };
-
-        // Parse EFI Spec Id Event structure
-        let spec_id_signature = data[index..index + 16].try_into().unwrap();
-        index += 16;
-        let spec_id_platform_cls = get_u32(data[index..index + 4].to_vec());
-        index += 4;
-        let spec_id_version_minor = get_u8(data[index..index + 1].to_vec());
-        index += 1;
-        let spec_id_version_major = get_u8(data[index..index + 1].to_vec());
-        index += 1;
-        let spec_id_errata = get_u8(data[index..index + 1].to_vec());
-        index += 1;
-        let spec_id_uint_size = get_u8(data[index..index + 1].to_vec());
-        index += 1;
-        let spec_id_num_of_algo = get_u32(data[index..index + 4].to_vec());
-        index += 4;
-        let mut spec_id_digest_sizes: Vec<TcgEfiSpecIdEventAlgorithmSize> = Vec::new();
-
-        for _ in 0..spec_id_num_of_algo {
-            let algo_id = get_u16(data[index..index + 2].to_vec());
-            index += 2;
-            let digest_size = get_u16(data[index..index + 2].to_vec());
-            index += 2;
-            spec_id_digest_sizes.push(TcgEfiSpecIdEventAlgorithmSize {
-                algo_id,
-                digest_size: digest_size.into(),
-            });
-        }
-
-        let spec_id_vendor_size = get_u8(data[index..index + 1].to_vec());
-        index += 1;
-        let mut spec_id_vendor_info = Vec::new();
-        if spec_id_vendor_size > 0 {
-            spec_id_vendor_info = data[index..index + spec_id_vendor_size as usize]
-                .try_into()
-                .unwrap();
-        }
-        index += spec_id_vendor_size as usize;
-
-        self.spec_id_header_event = TcgEfiSpecIdEvent {
-            signature: spec_id_signature,
-            platform_class: spec_id_platform_cls,
-            spec_version_minor: spec_id_version_minor,
-            spec_version_major: spec_id_version_major,
-            spec_errata: spec_id_errata,
-            uintn_ize: spec_id_uint_size,
-            number_of_algorithms: spec_id_num_of_algo,
-            digest_sizes: spec_id_digest_sizes,
-            vendor_info_size: spec_id_vendor_size,
-            vendor_info: spec_id_vendor_info,
-        };
-
-        Ok((specification_id_header, index.try_into().unwrap()))
+        Ok((spec_id_header, spec_id_event))
     }
 
     /***
@@ -381,46 +320,26 @@ impl EventLogs {
             A TcgImrEvent containing the event information
             An int specifying the event size
     */
-    fn parse_event_log(&mut self, data: Vec<u8>) -> Result<(TcgEventLog, u32), anyhow::Error> {
-        let mut index = 0;
-
-        let mut imr_index = get_u32(data[index..index + 4].to_vec());
-        index += 4;
-        imr_index -= 1;
-        let event_type = get_u32(data[index..index + 4].to_vec());
-        index += 4;
-
-        let rec_num = self.get_record_number(imr_index);
-
+    fn parse_event_log(&self, input: &mut &[u8]) -> anyhow::Result<TcgEventLog> {
+        let mut imr_index = u32::decode(input).context("failed to decode imr_index")?;
+        imr_index = imr_index.checked_sub(1).context("invalid imr index")?;
+        let event_type = u32::decode(input).context("failed to decode event_type")?;
         // Fetch digest count and get each digest and its algorithm
-        let digest_count = get_u32(data[index..index + 4].to_vec());
-        index += 4;
+        let digest_count = u32::decode(input).context("failed to decode digest_count")?;
         let mut digests: Vec<TcgDigest> = Vec::new();
         for _ in 0..digest_count {
-            let alg_id = get_u16(data[index..index + 2].to_vec());
-            index += 2;
-            let mut pos = 0;
-
-            while pos < self.spec_id_header_event.digest_sizes.len() {
-                if self.spec_id_header_event.digest_sizes[pos].algo_id == alg_id {
-                    break;
-                }
-                pos += 1;
-            }
-
-            if pos == self.spec_id_header_event.digest_sizes.len() {
-                return Err(anyhow!(
-                    "[parse_event_log] No algorithm with such algo_id {}",
-                    alg_id
-                ));
-            }
-
-            let alg = &self.spec_id_header_event.digest_sizes[pos];
+            let alg_id = u16::decode(input).context("failed to decode alg_id")?;
+            let alg = self
+                .spec_id_header_event
+                .digest_sizes
+                .iter()
+                .find(|&x| x.algo_id == alg_id)
+                .context("No algorithm with such algo_id")?;
             let digest_size = alg.digest_size;
-            let digest_data = data[index..index + digest_size as usize]
-                .try_into()
-                .unwrap();
-            index += digest_size as usize;
+            let mut digest_data = vec![0; digest_size as usize];
+            input
+                .read_exact(&mut digest_data)
+                .context("failed to read digest_data")?;
             let digest = TcgDigest {
                 algo_id: alg_id,
                 hash: digest_data,
@@ -428,23 +347,16 @@ impl EventLogs {
             digests.push(digest);
         }
 
-        let event_size = get_u32(data[index..index + 4].to_vec());
-        index += 4;
-        let event = data[index..index + event_size as usize].try_into().unwrap();
-        index += event_size as usize;
-
-        Ok((
-            TcgEventLog {
-                rec_num,
-                imr_index,
-                event_type,
-                digests,
-                event_size,
-                event,
-                extra_info: HashMap::new(),
-            },
-            index.try_into().unwrap(),
-        ))
+        let event = <VecOf<u32, u8>>::decode(input).context("failed to decode event")?;
+        Ok(TcgEventLog {
+            rec_num: 0, // TODO: alloc the rec_num outside.
+            imr_index,
+            event_type,
+            digests,
+            event_size: event.length(),
+            event: event.into_inner(),
+            extra_info: HashMap::new(),
+        })
     }
 
     /***
