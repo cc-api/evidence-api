@@ -1,10 +1,11 @@
 #![allow(non_camel_case_types)]
-use anyhow::anyhow;
+use anyhow::{anyhow, Context};
 use core::mem;
 use core::mem::transmute;
 use core::result::Result;
 use core::result::Result::Ok;
 use log::*;
+use scale::Decode;
 
 use crate::api::ParseCcReport;
 use crate::api_data::CcReport;
@@ -86,7 +87,7 @@ impl Tdx {
 }
 
 #[repr(C)]
-#[derive(Clone)]
+#[derive(Clone, Decode)]
 pub struct TdxQuoteHeader {
     /*** TD Quote Header.
     Attributes:
@@ -506,14 +507,10 @@ pub struct TdxQuote {
 }
 
 impl TdxQuote {
-    pub fn parse_tdx_quote(quote: Vec<u8>) -> Result<TdxQuote, anyhow::Error> {
-        let tdx_quote_header: TdxQuoteHeader = unsafe {
-            transmute::<[u8; 48], TdxQuoteHeader>(
-                quote[0..48]
-                    .try_into()
-                    .expect("slice with incorrect length"),
-            )
-        };
+    pub fn parse_tdx_quote(quote: Vec<u8>) -> anyhow::Result<TdxQuote> {
+        let buffer = &mut &quote[..];
+        let tdx_quote_header =
+            TdxQuoteHeader::decode(buffer).context("failed to decode quote header")?;
         if tdx_quote_header.version == TDX_QUOTE_VERSION_4 {
             let tdx_quote_body: TdxQuoteBody = unsafe {
                 transmute::<[u8; 584], TdxQuoteBody>(
