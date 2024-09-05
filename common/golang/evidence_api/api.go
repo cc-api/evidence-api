@@ -29,7 +29,7 @@ func (t CC_Type) String() string {
 type EvidenceAPI interface {
 	GetDefaultAlgorithm() (TCG_ALG, error)
 
-	GetCCReport(nonce, userData string, extraArgs map[string]any) (Report, error)
+	GetCCReport(nonce, userData []byte, extraArgs map[string]any) (Report, error)
 	DumpCCReport(reportBytes []byte) error
 
 	GetMeasurementCount() (int, error)
