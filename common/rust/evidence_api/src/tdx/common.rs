@@ -1,6 +1,7 @@
 #![allow(non_camel_case_types)]
 use crate::cc_type::*;
 use hashbrown::HashMap;
+use num_enum::TryFromPrimitive;
 
 pub struct Tdx {}
 
@@ -37,18 +38,36 @@ pub const TDX_REPORT_LEN: u32 = 1024;
 pub const TDX_QUOTE_LEN: usize = 4 * 4096;
 
 #[repr(u16)]
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug, TryFromPrimitive)]
 pub enum AttestationKeyType {
     ECDSA_P256 = 2,
     ECDSA_P384 = 3,
 }
 
 #[repr(u32)]
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, TryFromPrimitive)]
 pub enum IntelTeeType {
     TEE_SGX = 0x00000000,
     TEE_TDX = 0x00000081,
 }
+
+macro_rules! impl_decode_for {
+    ($type: ty) => {
+        impl scale::Decode for $type {
+            fn decode<In: scale::Input>(input: &mut In) -> Result<Self, scale::Error> {
+                <Self as TryFromPrimitive>::Primitive::decode(input)?
+                    .try_into()
+                    .map_err(|_| {
+                        let err_msg = concat!("failed to decode ", stringify!($type));
+                        scale::Error::from(err_msg)
+                    })
+            }
+        }
+    };
+}
+
+impl_decode_for!(AttestationKeyType);
+impl_decode_for!(IntelTeeType);
 
 // QE_VENDOR_INTEL_SGX ID string "939a7233f79c4ca9940a0db3957f0607";
 pub const QE_VENDOR_INTEL_SGX: [u8; 16] = [

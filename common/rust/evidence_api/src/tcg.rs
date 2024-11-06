@@ -1,4 +1,4 @@
-use crate::binary_blob::dump_data;
+use crate::{binary_blob::dump_data, codecs::VecOf};
 use hashbrown::HashMap;
 use log::info;
 
@@ -317,7 +317,7 @@ pub struct TcgPcClientImrEvent {
         BYTE[VendorInfoSize] vendorInfo;
     } TCG_EfiSpecIDEventStruct;
 */
-#[derive(Clone)]
+#[derive(Clone, scale::Decode)]
 pub struct TcgEfiSpecIdEvent {
     pub signature: [u8; 16],
     pub platform_class: u32,
@@ -325,10 +325,8 @@ pub struct TcgEfiSpecIdEvent {
     pub spec_version_major: u8,
     pub spec_errata: u8,
     pub uintn_ize: u8,
-    pub number_of_algorithms: u32,
-    pub digest_sizes: Vec<TcgEfiSpecIdEventAlgorithmSize>,
-    pub vendor_info_size: u8,
-    pub vendor_info: Vec<u8>,
+    pub digest_sizes: VecOf<u32, TcgEfiSpecIdEventAlgorithmSize>,
+    pub vendor_info: VecOf<u8, u8>,
 }
 
 impl Default for TcgEfiSpecIdEvent {
@@ -346,10 +344,8 @@ impl TcgEfiSpecIdEvent {
             spec_version_major: 0,
             spec_errata: 0,
             uintn_ize: 0,
-            number_of_algorithms: 0,
-            digest_sizes: Vec::new(),
-            vendor_info_size: 0,
-            vendor_info: Vec::new(),
+            digest_sizes: Default::default(),
+            vendor_info: Default::default(),
         }
     }
 }
@@ -363,10 +359,10 @@ impl TcgEfiSpecIdEvent {
         UINT16 digestSize;
     } TCG_EfiSpecIdEventAlgorithmSize;
 */
-#[derive(Clone)]
+#[derive(Clone, scale::Decode)]
 pub struct TcgEfiSpecIdEventAlgorithmSize {
     pub algo_id: u16,
-    pub digest_size: u32,
+    pub digest_size: u16,
 }
 
 #[derive(Clone)]
